@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(CLANG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/clang/")
+if(NOT DEFINED CLANG_PATH)
+    set(CLANG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/clang/")
+endif()
 set(CMAKE_LINKER ${CLANG_PATH}bin/ld.lld)
 set(CMAKE_ASM_LINK_EXECUTABLE ${CLANG_PATH}bin/ld.lld)
 set(CMAKE_C_COMPILER ${CLANG_PATH}bin/clang)
@@ -21,7 +23,9 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-set(VERIFMSI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/verif_msi_pp/")
+if(NOT DEFINED VERIFMSI_PATH)
+    set(VERIFMSI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/verif_msi_pp/")
+endif()
 file(GLOB VERIF_MSI_HEADERS ${VERIFMSI_PATH}/*.hpp)
 
 set(CXXRTL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/")
