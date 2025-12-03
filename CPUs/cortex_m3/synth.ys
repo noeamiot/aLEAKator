@@ -1,0 +1,88 @@
+echo on
+
+# Read full CPU sources
+read_verilog -defer -I./cm3_gen_verilog/ ./cm3_gen_verilog/*.v
+
+hierarchy -check -top $abstract\example_tbench
+stat
+
+# Select CPU
+select -module $paramod$cae356ad81bec1675432429712985cfd60444379\CORTEXM3INTEGRATION
+
+flatten;
+proc;
+pmuxtree;
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+opt -fast -full;
+memory_map;
+opt -full;
+opt_clean;
+dffunmap;
+
+# We want to keep everything that has been produced here
+setattr -set keep 1 w:*;
+select -clear;
+stat;
+
+# Back to the SOC
+hierarchy -check -top example_tbench;
+
+flatten;
+proc;
+pmuxtree;
+
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+opt -fast -full;
+#memory_map;
+opt -full;
+
+select -module example_tbench \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_decode_dcore.output_port_data \uCORTEXM3INTEGRATION.uCORTEXM3.dpu_ahb_htransd \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.instr_br_pflush_ex \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.bm_readyout_sel \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_dec.u_cm3_dpu_16bit_dec.reg_immed_sel_de \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_fetch.u_cm3_dpu_fetch_ahbintf.ahb_haddri_sel \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_dec.u_cm3_dpu_32bit_dec.reg_addr_sel_de \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_lsu.u_cm3_dpu_lsu_ctl.idle_sel \uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_bit_master.next_trans_slave
+splitnets -format @@;
+select -clear;
+select -module example_tbench uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.dec_dcore_readyout %cie*
+splitnets -format @@;
+select -clear;
+
+select -module example_tbench uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.fault_lsu_ex uROM.IndexReg uRAM.IndexReg uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_nvic.u_cm3_nvic_main.u_cm3_nvic_int_state.prev_int_pend uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_lsu.u_cm3_dpu_lsu_ahbintf.sp_offset_sel_ex uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_lsu.lsm_list_length_ex uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_lsu.lsm_ici_remaining_ex uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.u_cm3_dpu_alu.instr_alu_ctl_ex uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_dpu.rf_pc_fwd_ex uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_output_stage_sys.input_port_data uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_output_stage_ppb.input_port_data uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_output_stage_dcode.input_port_data uCORTEXM3INTEGRATION.uCORTEXM3.u_cm3_bus_matrix.u_cm3_mtx_bit_master.unalign_prot uCORTEXM3INTEGRATION.uCORTEXM3.nvic_int_addr uCORTEXM3INTEGRATION.uCORTEXM3.dpu_nxt_ufsr HRESPS_Default
+splitnets -format @@;
+select -clear;
+
+rename example_tbench top;
+
+opt_clean -purge;
+
+dffunmap;
+
+rename -enumerate;
+check;
+stat;
+write_cxxrtl -nohierarchy -noproc -noflatten -O6 -g4 -header -print-symbolic cxxrtl_cortex_m3.cpp
+write_table cortex_m3.tsv
+stat;
+

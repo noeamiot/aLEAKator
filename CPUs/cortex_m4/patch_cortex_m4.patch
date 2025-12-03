@@ -1,0 +1,66 @@
+--- /home/amiotnoe/Projets/hdl_benches/build/examples/CPUs/cortex_m4/cxxrtl_cortex_m4.cpp	2025-08-14 14:22:19.889927423 +0200
++++ cxxrtl_cortex_m4.cpp	2025-08-14 14:35:47.461924343 +0200
+@@ -740,10 +740,63 @@
+ 	// cell \_17808_
+ 	p___7339__ = not_u<1>(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__status_2e_instr__it__valid__ex.curr);
+ 	// \src: ./cm4_gen_verilog/cm4_dpu_lsu_ahbintf.v:1036.28-1037.45
+ 	// cell \_16421_
+ 	p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_31_40_.concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_30_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_29_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_28_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_27_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_26_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_25_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_24_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_23_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_22_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_21_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_20_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_19_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_18_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_17_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_16_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_15_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_14_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_13_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_12_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_11_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_10_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_9_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_8_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_7_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_6_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_5_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_4_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_3_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__lsu_2e_u__cm4__dpu__lsu__ahbintf_2e_addr__adder__ex_40_2_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_1_40_).concat(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_0_40_) = add_uu<32>(p___6265__.concat(p___6264__).concat(p___6262__).concat(p___6261__).concat(p___6260__).concat(p___6259__).concat(p___6258__).concat(p___6257__).concat(p___6256__).concat(p___6255__).concat(p___6254__).concat(p___6253__).concat(p___6251__).concat(p___6250__).concat(p___6249__).concat(p___6248__).concat(p___6247__).concat(p___6246__).concat(p___6245__).concat(p___6244__).concat(p___6243__).concat(p___6242__).concat(p___6272__).concat(p___6271__).concat(p___6270__).concat(p___6269__).concat(p___6268__).concat(p___6267__).concat(p___6266__).concat(p___6263__).concat(p___6252__).concat(p___6241__).val(), p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__lsu_2e_u__cm4__dpu__lsu__ahbintf_2e_addr__adder__ctl__ex.curr);
++    if (p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_31_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_30_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_29_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_28_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_27_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_26_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_25_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_24_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_23_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_22_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_21_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_20_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_19_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_18_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_17_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_16_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_15_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_14_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_13_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_12_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_11_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_10_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_9_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_1_40_.node->nature != CONST
++        || p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_0_40_.node->nature != CONST) {
++            std::cout << "UnSymbolizing directly inside model" << std::endl;
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_31_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_31_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_30_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_30_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_29_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_29_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_28_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_28_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_27_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_27_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_26_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_26_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_25_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_25_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_24_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_24_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_23_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_23_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_22_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_22_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_21_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_21_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_20_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_20_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_19_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_19_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_18_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_18_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_17_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_17_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_16_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_16_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_15_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_15_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_14_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_14_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_13_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_13_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_12_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_12_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_11_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_11_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_10_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_10_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_9_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_9_40_.get<uint8_t>(), 1));
++
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_1_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_1_40_.get<uint8_t>(), 1));
++            p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_0_40_.setNode(&constant(p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_dpu__ahb__haddrd_40_0_40_.get<uint8_t>(), 1));
++    }
+ 	// \src: ./cm4_gen_verilog/cm4_dpu_16bit_dec.v:759.33-762.58
+ 	// cell \_13737_
+ 	p___4146__ = or_uu<1>(p___4145__, p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__dec_2e_u__cm4__dpu__16bit__dec_2e_i16__alu__bw__eor__de);
+ 	// \src: ./cm4_gen_verilog/cm4_dpu_16bit_dec.v:269.26-269.57
+ 	// cell \_13347_

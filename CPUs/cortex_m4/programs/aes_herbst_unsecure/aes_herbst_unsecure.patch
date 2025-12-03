@@ -1,0 +1,15 @@
+--- /home/amiotnoe/Projets/hdl_benches/build/CPUs/cortex_m4/programs/aes_herbst_unsecure/aes_herbst_unsecure.S	2025-08-26 12:03:19.608807624 +0200
++++ aes_herbst_unsecure.S	2025-08-26 12:02:45.953826512 +0200
+@@ -604,11 +604,11 @@
+ 	ldrb	r0, [r4, #13]
+ 	ldrb	r2, [r4, #14]
+ 	ldrb	r5, [r4, #15]
+ 	str.w	r6, [r10, #52]
+ 	str.w	r0, [r10, #56]
+-	lsl	r0, r3, #30
++	lsls	r0, r3, #30
+ 	str.w	r2, [r10, #60]
+ 	str.w	r5, [r10, #64]
+ 	bne	.LBB7_1
+ @ %bb.4:                                @   in Loop: Header=BB7_3 Depth=1
+ 	ldr.w	r0, [r10, #52]

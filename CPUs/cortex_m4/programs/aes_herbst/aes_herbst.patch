@@ -1,0 +1,28 @@
+--- /home/amiotnoe/Projets/hdl_benches/build/examples/CPUs/cortex_m4/programs/aes_herbst/aes_herbst.S	2025-08-24 11:30:55.111966657 +0200
++++ /home/amiotnoe/Projets/hdl_benches/examples/hardware/cortex_m4/programs/aes_herbst/aes_herbst.S	2025-08-24 11:31:01.321370439 +0200
+@@ -696,11 +696,11 @@
+ 	ldrb	r0, [r7, #-34]
+ 	ldrb	r6, [r7, #-35]
+ .LBB7_2:                                @   in Loop: Header=BB7_3 Depth=1
+ 	eor	r0, r6
+ 	uxtb	r0, r0
+-	add	r2, #16
++	adds	r2, #16
+ 	add.w	r1, r1, #1
+ 	str.w	r0, [r3, #652]
+ 	beq.w	.LBB7_5
+ .LBB7_3:                                @ =>This Inner Loop Header: Depth=1
+ 	add.w	r3, lr, r2
+@@ -720,11 +720,11 @@
+ 	str.w	r6, [r8, #20]
+ 	@APP
+ 	@NO_APP
+ 	@APP
+ 	@NO_APP
+-	lsl	r6, r1, #30
++	lsls	r6, r1, #30
+ 	bne	.LBB7_1
+ @ %bb.4:                                @   in Loop: Header=BB7_3 Depth=1
+ 	@APP
+ 	@NO_APP
+ 	ldr.w	r6, [r8, #8]

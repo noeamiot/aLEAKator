@@ -1,0 +1,85 @@
+# Perform a bottom up "synthesis", one for the ibex core then one for the
+# simple_ibex_system implementing it.
+# Most of the commands here are the one executed with the synth comnand
+# the main difference being, we never call: wreduce, alumacc, abc and
+# only conditionnaly memory_map.
+
+echo on
+read_verilog -defer ./cv32e40p_gen_verilog/*.v
+
+# Concretize parameters for our top
+hierarchy -check -top $abstract\simple_system
+
+# First "synthesis", select the ibex as our top
+select -module cv32e40p_top
+flatten;
+proc;
+pmuxtree;
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;;;
+share;
+opt;
+memory -nomap;
+opt_clean;;;
+
+opt -fast -full;
+#memory_map;
+opt -full;
+opt_clean;;;
+dffunmap;
+
+# We want to keep everything that has been produced here
+setattr -set keep 1 w:*;
+select -clear;
+stat;
+
+# Second "synthesis", select our real top as top
+hierarchy -check -top simple_system;
+
+flatten;
+proc;
+pmuxtree;
+
+# These signals must be split for cxxrtl to not identify false logic loops
+select -module simple_system u_top.core_i.load_store_unit_i.data_sign_ext_q u_top.core_i.if_stage_i.prefetch_buffer_i.prefetch_controller_i.trans_addr_q  u_top.core_i.if_stage_i.prefetch_buffer_i.instruction_obi_i.gen_no_trans_stable.obi_addr_q  u_top.core_i.ex_stage_i.regfile_waddr_lsu  u_top.core_i.ex_stage_i.regfile_waddr_i  u_top.core_i.ex_stage_i.regfile_alu_waddr_fw_o  u_top.core_i.data_sign_ext_ex  u_top.core_i.cs_registers_i.mtvec_mode_o  u_top.core_i.cs_registers_i.mstatus_q  u_top.core_i.cs_registers_i.mie_q  u_top.core_i.cs_registers_i.mhpmevent_q  u_top.core_i.cs_registers_i.mhpmcounter_q  u_top.core_i.cs_registers_i.mcountinhibit_q  u_top.core_i.cs_registers_i.dcsr_q  u_top.core_i.alu_operator_ex 
+splitnets -format @@;
+select -clear;
+
+rename simple_system top;
+
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;;;
+share;
+opt;
+memory -nomap;
+opt_clean;;;
+
+
+opt -full;
+opt_clean -purge;;;
+
+# Transform dff to basic types
+dffunmap;
+
+# Transform all wires to public wires
+rename -enumerate;
+
+# Write our final cxxrtl model
+write_cxxrtl -nohierarchy -noflatten -noproc -O6 -g4 -print-symbolic -header ./cxxrtl_cv32e40p.cpp;
+write_table cv32e40p.tsv
+
+stat;

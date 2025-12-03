@@ -1,0 +1,82 @@
+# Perform a bottom up "synthesis", one for the ibex core then one for the
+# simple_ibex_system implementing it.
+# Most of the commands here are the one executed with the synth comnand
+# the main difference being, we never call: wreduce, alumacc, abc and
+# only conditionnaly memory_map.
+
+echo on
+read_verilog ./coco-ibex_gen_verilog/*.v
+
+# First "synthesis", select the ibex as our top
+select -module ibex_core;
+flatten;
+proc;
+pmuxtree;
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+opt -fast -full;
+memory_map;
+opt -full;
+opt_clean;
+dffunmap;
+
+# We want to keep everything that has been produced here
+setattr -set keep 1 w:*;
+select -clear;
+stat;
+
+# Second "synthesis", select our real top as top
+hierarchy -check -top ibex_top;
+
+flatten;
+proc;
+pmuxtree;
+
+# These signals must be split for cxxrtl to not identify false logic loops
+select -module ibex_top u_core.cs_registers_i.dcsr_q u_core.cs_registers_i.mcountinhibit_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.fetch_addr_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.stored_addr_q u_core.cs_registers_i.pc_id_i;
+splitnets -format @@;
+select -clear;
+
+rename ibex_top top;
+
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+
+opt -full;
+opt_clean -purge;
+
+# Transform dff to basic types
+dffunmap;
+
+# Transform all wires to public wires
+rename -enumerate;
+
+# Write our final cxxrtl model
+write_cxxrtl -O6 -g4 -print-symbolic -header cxxrtl_coco-ibex.cpp;
+write_table coco-ibex.tsv
+
+stat;

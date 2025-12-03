@@ -1,0 +1,8 @@
+**/*_program.cpp
+**/*.bin
+**/*.elf
+**/*.o
+**/*.symbols
+**/*.data
+startup.o
+aes_herbst/aes_herbst.S

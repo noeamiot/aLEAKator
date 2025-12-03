@@ -1,0 +1,107 @@
+echo on
+
+# Read full CPU sources
+read_verilog -defer -I./cm4_gen_verilog/ ./cm4_gen_verilog/*.v
+
+hierarchy -check -top $abstract\example_tbench
+stat
+
+# Select CPU
+select -module $paramod$8beae4c0b1e737439ced04544db6430407a0ffad\CORTEXM4INTEGRATION
+
+flatten;
+proc;
+pmuxtree;
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+opt -fast -full;
+memory_map;
+opt -full;
+opt_clean;
+dffunmap;
+
+# We want to keep everything that has been produced here
+setattr -set keep 1 w:*;
+select -clear;
+stat;
+
+# Back to the SOC
+hierarchy -check -top example_tbench;
+
+flatten;
+proc;
+pmuxtree;
+
+opt_expr;
+opt_clean;;;
+
+check;
+opt -nodffe -nosdff;
+fsm;
+opt;
+peepopt;
+opt_clean;
+share;
+opt;
+memory -nomap;
+opt_clean;
+
+opt -fast -full;
+#memory_map;
+opt -full;
+
+
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_32bit_dec.reg_addr_sel_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.instr_lsu_ctl_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_de
+splitnets -format @@;
+select -clear;
+
+# Costly but eh
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.dec_dcore_readyout %cie*
+splitnets -format @@;
+select -clear;
+
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_rd_b_addr_de %cie*
+splitnets -format @@;
+select -clear;
+
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.instr_br_pflush_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.u_cm4_dpu_lsu_ctl.idle_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_16bit_dec.reg_immed_sel_de
+splitnets -format @@;
+select -clear;
+
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_output_stage_sys.input_port_addr uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_output_stage_sys.input_port_data uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_fetch.u_cm4_dpu_fetch_ahbintf.ahb_haddri_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.u_cm4_dpu_lsu_ctl.idle_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_lsu_rd_a_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_lsu_rd_b_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_32bit_dec.instr_32_lsu_rd_c_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_32bit_dec.instr_32_lsu_wr_d_addr_de
+splitnets -format @@;
+select -clear;
+
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_rd_a_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_rd_b_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_wr_d_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_rd_c_addr_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.u_cm4_dpu_lsu_ahbintf.sp_offset_sel_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_lsm_immed_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.instr_sp_rd_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.is_dcore_trans uCORTEXM4INTEGRATION.uCORTEXM4.dpu_ahb_htransd uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.u_cm4_dpu_lsu_ctl.idle_nxt_state uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_bit_master.bm_slave_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.bm_readyout_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.bm_dcore_active_sel uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.bm_trans uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.bm_burst
+splitnets -format @@;
+select -clear;
+
+# Others
+select -module example_tbench uROM.IndexReg uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_output_stage_dcode.input_port_data uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.rf_pc_fwd_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_nvic.u_cm4_nvic_main.u_cm4_nvic_int_state.prev_int_pend uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.lsm_list_length_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_lsu.lsm_ici_remaining_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_e.u_cm4_dpu_e_simdsat.sat16_mask_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_alu.instr_alu_ctl_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_output_stage_ppb.input_port_data uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_bus_matrix.u_cm4_mtx_bit_master.unalign_prot uCORTEXM4INTEGRATION.uCORTEXM4.nvic_int_addr uCORTEXM4INTEGRATION.uCORTEXM4.dpu_nxt_ufsr HRESPS_Default uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.fault_lsu_ex
+splitnets -format @@;
+select -clear;
+
+rename example_tbench top;
+
+opt_clean -purge;
+
+dffunmap;
+
+rename -enumerate;
+check;
+stat;
+write_cxxrtl -nohierarchy -noproc -noflatten -O6 -g4 -header -print-symbolic cxxrtl_cortex_m4.cpp
+write_table cortex_m4.tsv
+stat;

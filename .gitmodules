@@ -1,0 +1,30 @@
+[submodule "coco-alma"]
+	path = accelerators/coco/submodules/coco-alma
+	url = https://github.com/IAIK/coco-alma/
+[submodule "aes-dom"]
+	path = accelerators/coco/submodules/aes-dom
+	url = https://github.com/vedadux/aes-dom/
+[submodule "prolead"]
+	path = accelerators/prolead/submodules/prolead
+	url = https://github.com/ChairImpSec/PROLEAD
+[submodule "prover"]
+	path = accelerators/sboxes/submodules/prover
+	url = https://github.com/Lucien98/prover/
+[submodule "coco-alma_evaluation"]
+	path = accelerators/sboxes/submodules/coco-alma_evaluation
+	url = https://github.com/Lucien98/coco-alma_evaluation
+[submodule "ibex"]
+	path = CPUs/submodules/ibex
+	url = https://github.com/noeamiot/ibex
+[submodule "coco-ibex"]
+	path = CPUs/submodules/coco-ibex
+	url = https://github.com/noeamiot/coco-ibex
+[submodule "cv32e40p"]
+	path = CPUs/submodules/cv32e40p
+	url = https://github.com/noeamiot/cv32e40p
+#[submodule "cortex_m3"]
+#	path = CPUs/submodules/cortex_m3
+#	url = git@gitlab.lip6.fr:amiotnoe/cortex-m3.git
+#[submodule "cortex_m4"]
+#	path = CPUs/submodules/cortex_m4
+#	url = git@gitlab.lip6.fr:amiotnoe/cortex-m4
