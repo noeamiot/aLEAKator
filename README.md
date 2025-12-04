@@ -4,17 +4,18 @@ aLEAKator is a formal verification tool for verifying the security of masked sof
 hardware as well as masked hardware implementations. It establishes the needed verifications and
 eventual optimisations for a given security property provided by the user.
 
-Verification and symbolic expression generation are performed using (VerifMSI)[https://github.com/quentin-meunier/verifmsi].
-The C++ implementation is used and should be released to the public soon.
+Verification and symbolic expression generation are performed using [VerifMSI](https://github.com/quentin-meunier/verifmsi).
+The C++ implementation is used and should be released to the public soon. For now, a precompiled version
+is available [on github](https://github.com/noeamiot/verif_msi_pp-prerelease).
 
 To use this repository, you MUST clone the project with the submodules:
-`git clone git@gitlal.lip6.fr:amiotnoe/aleakator --recurse-submodules`
+`git clone git@github.com:noeamiot/aleakator --recurse-submodules`
 
 If you are allowed to access the cortex_m3 and cortex_m4 cores, you can uncomment in the
 `.gitmodules` file the corresponding submodules.
 You need a custom version of yosys, in particular the custom cxxrtl backend behind aLEAKator.
 
-It will be available (here soon)[https://gitlab.lip6.fr/amiotnoe/yosys/]
+It is available [on github](https://github.com/noeamiot/yosys).
 
 # Stability
 
