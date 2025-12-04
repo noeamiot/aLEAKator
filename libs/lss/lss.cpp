@@ -270,70 +270,42 @@ std::set<Node*> flatten(LeakSet* source) {
 
 bool symb_verify_without_glitch_bit(Node* a, bool remove_false_negatives, Properties prop, int order, int outputs) {
     bool not_leaking = false;
-    switch (prop) {
-        case Properties::TPS:
-            not_leaking = checkTpsValBit(*a);
-            break;
-        case Properties::NI:
-            not_leaking = checkNIValBit(*a, order);
-            break;
-        case Properties::SNI:
-            not_leaking = checkNIValBit(*a, order - outputs);
-            break;
-        default:
-            assert("Property not handled yet");
-    }
-
-    if (!not_leaking) {
-        // Last chance is enumeration but we must do it on each bit
-        // We assume it is a false a negative and if one of the bit is wrong, we report it as a true negative
-        // TODO: IS IT VALID FOR OTHER THINGS THAN TPS ?
-        if (remove_false_negatives) {
-            bool is_false_negative = true;
-            for (int i = 0; i < a->width; ++i) {
-                std::cout << "Going to enumerate, number of bits to enumerate :" << getSymbolicBitsNum(simplify(Extract(i, i, *a))) << std::endl;
-                if (!getDistribWithExev(simplify(Extract(i, i, *a)))) {
-                    is_false_negative = false;
-                    break;
-                }
-            }
-            if (is_false_negative) { std::cout << "Info: Recovered from false positive on node bit by bit !" << std::endl; return true; }
+    for (int i = 0; i < a->width; i++) {
+        Node& n = simplify(Extract(i, i, *a));
+        switch (prop) {
+            case Properties::TPS:
+                not_leaking = (remove_false_negatives) ? tpsNoFalsePositive(n, true) : tps(n, true);
+                break;
+            case Properties::NI:
+                not_leaking = ni(n, order);
+                break;
+            case Properties::SNI:
+                not_leaking = ni(n, order - outputs);
+                break;
+            default:
+                assert("Property not handled yet");
         }
-        std::cout << "LEAK on node bit by bit !" << std::endl;
-        return false;
+        if (not not_leaking)
+            return not_leaking;
     }
     return true;
 }
 
 bool symb_verify_without_glitch(Node* a, bool remove_false_negatives, Properties prop, int order, int outputs) {
-    bool not_leaking = false;
     switch (prop) {
         case Properties::TPS:
-            not_leaking = checkTpsVal(*a);
+            return (remove_false_negatives) ? tpsNoFalsePositive(*a, true) : tps(*a, true);
             break;
         case Properties::NI:
-            not_leaking = checkNIVal(*a, order);
+            return ni(*a, order, true);
             break;
         case Properties::SNI:
-            not_leaking = checkNIVal(*a, order - outputs);
+            return ni(*a, order - outputs, true);
             break;
         default:
             assert("Property not handled yet");
     }
 
-    if (!not_leaking) {
-        // Last chance is enumeration but we must do it on each bit
-        // TODO: IS IT VALID FOR OTHER THINGS THAN TPS ?
-        if (remove_false_negatives) {
-            std::cout << "Going to enumerate, number of bits to enumerate :" << getSymbolicBitsNum(*a) << std::endl;
-            if (getDistribWithExev(*a)) {
-                std::cout << "Info: Recovered from false positive on whole node !" << std::endl;
-                return true;
-            }
-        }
-        std::cout << "LEAK on whole node !" << std::endl;
-        return false;
-    }
     return true;
 }
 
@@ -341,33 +313,20 @@ bool symb_verify_with_glitch(const std::set<Node*>& set, bool remove_false_negat
     if (set.size() <= 0) return true;
 
     std::vector<Node*> leakages(set.begin(), set.end());
-    bool not_leaking = false;
     switch (prop) {
         case Properties::TPS:
-            not_leaking = tps(leakages, true);
+            return (remove_false_negatives) ? tpsNoFalsePositive(leakages, true) : tps(leakages, true);
             break;
         case Properties::NI:
-            not_leaking = ni(leakages, order, true);
+            return ni(leakages, order, true);
             break;
         case Properties::SNI:
-            not_leaking = ni(leakages, order - outputs, true);
+            return ni(leakages, order - outputs, true);
             break;
         default:
             assert("Property not handled yet");
     }
 
-    if (!not_leaking) {
-        if (remove_false_negatives) {
-            Node* node = &Concat(leakages);
-            std::cout << "Going to enumerate, number of bits to enumerate :" << getSymbolicBitsNum(*node) << std::endl;
-            if (getDistribWithExev(*node)) {
-                std::cout << "Info: Recovered from false positive with glitch on whole set " << std::endl;
-                return true;
-            }
-        }
-        std::cout << "LEAK with glitch on whole set " << std::endl;
-        return false;
-    }
     return true;
 }
 
