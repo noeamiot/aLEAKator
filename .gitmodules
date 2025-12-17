@@ -22,9 +22,3 @@
 [submodule "submodules/cv32e40p"]
 	path = submodules/cv32e40p
 	url = https://github.com/noeamiot/cv32e40p
-#[submodule "submodules/cortex_m3"]
-#	path = submodules/cortex_m3
-#	url = git@gitlab.lip6.fr:amiotnoe/cortex-m3
-#[submodule "submodules/cortex_m4"]
-#	path = submodules/cortex_m4
-#	url = git@gitlab.lip6.fr:amiotnoe/cortex-m4

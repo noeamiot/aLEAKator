@@ -45,7 +45,7 @@ proc;
 pmuxtree;
 
 # These signals must be split for cxxrtl to not identify false logic loops
-select -module ibex_top u_core.cs_registers_i.dcsr_q u_core.cs_registers_i.mcountinhibit_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.fetch_addr_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.stored_addr_q u_core.cs_registers_i.pc_id_i;
+select -module ibex_top u_core.id_stage_i.controller_i.ctrl_fsm_cs u_core.cs_registers_i.dcsr_q u_core.cs_registers_i.mcountinhibit_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.fetch_addr_q u_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.stored_addr_q u_core.cs_registers_i.pc_id_i;
 splitnets -format @@;
 select -clear;
 

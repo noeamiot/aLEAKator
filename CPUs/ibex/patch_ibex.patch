@@ -1,12 +1,12 @@
 --- ../../../build/examples/CPUs/ibex/cxxrtl_ibex.cpp	2025-08-11 16:20:35.776892662 +0200
 +++ cxxrtl_ibex.cpp.bk	2025-08-11 16:24:51.086075992 +0200
-@@ -2410,10 +2410,20 @@
- 	// cell \_3911_
- 	p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_instr__executing = and_uu<1>(p___1512__, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed);
- 	// \src: ./ibex_gen_verilog/ibex_id_stage.v:586.38-586.68
- 	// cell \_3895_
- 	p___1506__ = and_uu<1>(p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_decoder__i_2e_data__req__o);
-+    if (p___1506__.data[0] && simplify(Extract(33, 11, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node)).nature != CONST) {
+@@ -2404,10 +2404,20 @@
+	// cell \_3916_
+	p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_instr__executing = and_uu<1>(p___1531__, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed);
+	// \src: ./ibex_gen_verilog/ibex_id_stage.v:586.38-586.68
+	// cell \_3900_
+	p___1525__ = and_uu<1>(p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_decoder__i_2e_data__req__o);
++    if (p___1525__.data[0] && simplify(Extract(33, 11, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node)).nature != CONST) {
 +        std::cout << "Concretizing MSB for lsu" << std::endl;
 +
 +        p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.setNode(&Concat(
@@ -16,8 +16,8 @@
 +        ));
 +        p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.debug_assert();
 +    }
- 	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.115-283.135
- 	// cell \_4169_
- 	p___1080__.slice<2>() = eq_uu<1>(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.slice<2,1>().val(), value<2>{0x3u});
- 	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.90-283.109
- 	// cell \_4168_
+	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.115-283.135
+	// cell \_4173_
+	p___433__.slice<2>() = eq_uu<1>(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.slice<2,1>().val(), value<2>{0x3u});
+	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.90-283.109
+	// cell \_4172_

@@ -11,11 +11,18 @@ is available [on github](https://github.com/noeamiot/verif_msi_pp-prerelease).
 To use this repository, you MUST clone the project with the submodules:
 `git clone git@github.com:noeamiot/aleakator --recurse-submodules`
 
-If you are allowed to access the cortex_m3 and cortex_m4 cores, you can uncomment in the
-`.gitmodules` file the corresponding submodules.
+If you are allowed to access the cortex_m3 and cortex_m4 cores, you can add them as submodules
+with the commands at the root of the project:
+```
+git submodule add git-url:repo-cortex-m4 submodules/cortex_m4
+git submodule add git-url:repo-cortex-m3 submodules/cortex_m3
+```
+
 You need a custom version of yosys, in particular the custom cxxrtl backend behind aLEAKator.
 
 It is available [on github](https://github.com/noeamiot/yosys).
+
+Documentation is WIP.
 
 # Stability
 

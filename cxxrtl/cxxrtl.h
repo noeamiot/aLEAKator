@@ -285,7 +285,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			assert(this->cmpConc());
 		} else {
 			// Find partially const node that are not consistant with conc state
-			for (int i = 0; i < Bits; ++i) {
+			for (size_t i = 0; i < Bits; ++i) {
 				Node* curr = &simplify(Extract(i, i, *(this->node)));
 				assert(curr->nature != CONST || (((this->data[i/32]) >> (i%32)) & 1) == curr->cst[0]);
 			}
@@ -749,10 +749,10 @@ struct value : public expr_base<value<Bits>>, leakable {
 			return false;
 
 		// Ugly but compares the 32 bit segmented and 64 bits segmented arrays
-		for (size_t i = 0; i < node->nlimbs; ++i) {
+		for (int i = 0; i < node->nlimbs; ++i) {
 			if ((uint32_t)node->cst[i] != data[2*i])
 				return false;
-			if (2*i+1 >= chunks) {
+			if (static_cast<size_t>(2*i+1) >= chunks) {
 				if ((uint32_t)(node->cst[i] >> 32) != 0)
 					return false;
 			} else {
@@ -1166,13 +1166,17 @@ struct value : public expr_base<value<Bits>>, leakable {
 		result.data[result.chunks - 1] &= result.msb_mask;
 		if (ResultBits != node->width) {
 			result.node = &simplify(ZeroExt(ResultBits - node->width, *node) * ZeroExt(ResultBits - other.node->width, *other.node));
+		} else if (ResultBits < static_cast<size_t>(node->width)) {
+			result.node = &Extract(ResultBits - 1, 0, simplify(*node * *other.node));
 		} else {
 			result.node = &simplify((*node) * (*other.node));
 		}
 
 		// Replicate full stability on output only if both inputs are fully stable
-		if (is_fully_stable() && other.is_fully_stable())
+		if (is_fully_stable() && other.is_fully_stable()) {
 			std::copy(stability, stability + value<Bits>::chunks, result.stability);
+			result.stability[result.chunks - 1] &= result.msb_mask;
+		}
 
 		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls), result.node, result.stability);
 
@@ -3273,13 +3277,13 @@ value<BitsY> gt_uu(const value<BitsA> &a, const value<BitsB> &b) {
 	constexpr size_t BitsExt = max(BitsA, BitsB);
 	//value<BitsY> tmp = value<BitsY> { b.template zext<BitsExt>().ucmp(a.template zext<BitsExt>()) ? 1u : 0u };
 
-	value<BitsExt> ea = a.template sext<BitsExt>();
-	value<BitsExt> eb = b.template sext<BitsExt>();
+	value<BitsExt> ea = a.template zext<BitsExt>();
+	value<BitsExt> eb = b.template zext<BitsExt>();
 
-	value<BitsY> tmp = value<BitsY> { eb.ConcScmp(ea) ? 1u : 0u };
+	value<BitsY> tmp = value<BitsY> { eb.ConcUcmp(ea) ? 1u : 0u };
 
 	if (a.node->nature != CONST or b.node->nature != CONST) {
-		simulation_logger << "Fixed: gt_uu: Will scmp" << std::endl;
+		simulation_logger << "Fixed: gt_uu: Will ucmp" << std::endl;
 		Node* res = &simplify((Extract(BitsExt - 1, BitsExt - 1, *ea.node)) & (~Extract(BitsExt - 1, BitsExt - 1, *eb.node)));
 		for (int i = BitsExt - 2; i >= 0; i--) {
 			//simulation_logger << "i: " << i << std::endl;
@@ -3354,40 +3358,6 @@ value<BitsY> gt_ss(const value<BitsA> &a, const value<BitsB> &b) {
 
 template<size_t BitsY, size_t BitsA, size_t BitsB>
 CXXRTL_ALWAYS_INLINE
-value<BitsY> ge_uu(const value<BitsA> &a, const value<BitsB> &b) {
-	static_assert(BitsY == 1);
-	assert(a.node->nature == CONST and b.node->nature == CONST && "ge_uu is currently not implemented for symbolic elements.");
-	assert(a.ls == nullptr and b.ls == nullptr && "ge_uu is currently not implemented for ls concretisations.");
-
-	constexpr size_t BitsExt = max(BitsA, BitsB);
-	value<BitsY> tmp = value<BitsY> { !a.template zext<BitsExt>().ucmp(b.template zext<BitsExt>()) ? 1u : 0u };
-
-	// TODO: Could be better
-	if (not a.is_fully_stable() or not b.is_fully_stable())
-		tmp.stability[0] = 0x0u;
-
-	return tmp;
-}
-
-template<size_t BitsY, size_t BitsA, size_t BitsB>
-CXXRTL_ALWAYS_INLINE
-value<BitsY> ge_ss(const value<BitsA> &a, const value<BitsB> &b) {
-	static_assert(BitsY == 1);
-	assert(a.node->nature == CONST and b.node->nature == CONST && "ge_ss is currently not implemented for symbolic elements.");
-	assert(a.ls == nullptr and b.ls == nullptr && "ge_ss is currently not implemented for ls concretisations.");
-
-	constexpr size_t BitsExt = max(BitsA, BitsB);
-	value<BitsY> tmp = value<BitsY> { !a.template sext<BitsExt>().scmp(b.template sext<BitsExt>()) ? 1u : 0u };
-
-	// TODO: Could be better
-	if (not a.is_fully_stable() or not b.is_fully_stable())
-		tmp.stability[0] = 0x0u;
-
-	return tmp;
-}
-
-template<size_t BitsY, size_t BitsA, size_t BitsB>
-CXXRTL_ALWAYS_INLINE
 value<BitsY> lt_uu(const value<BitsA> &a, const value<BitsB> &b) {
 	static_assert(BitsY == 1);
 	constexpr size_t BitsExt = max(BitsA, BitsB);
@@ -3430,18 +3400,61 @@ value<BitsY> lt_uu(const value<BitsA> &a, const value<BitsB> &b) {
 template<size_t BitsY, size_t BitsA, size_t BitsB>
 CXXRTL_ALWAYS_INLINE
 value<BitsY> lt_ss(const value<BitsA> &a, const value<BitsB> &b) {
-	static_assert(BitsY == 1);
-	assert(a.node->nature == CONST and b.node->nature == CONST && "lt_ss is currently not implemented for symbolic elements.");
-	assert(a.ls == nullptr and b.ls == nullptr && "lt_ss is currently not implemented for ls concretisations.");
-
 	constexpr size_t BitsExt = max(BitsA, BitsB);
-	value<BitsY> tmp = value<BitsY> { a.template sext<BitsExt>().scmp(b.template sext<BitsExt>()) ? 1u : 0u };
+	//value<BitsY> tmp = value<BitsY> { a.template sext<BitsExt>().scmp(b.template sext<BitsExt>()) ? 1u : 0u };
+
+	value<BitsExt> ea = a.template sext<BitsExt>();
+	value<BitsExt> eb = b.template sext<BitsExt>();
+
+	value<BitsY> tmp = value<BitsY> { ea.ConcScmp(eb) ? 1u : 0u };
+
+	if (a.node->nature != CONST or b.node->nature != CONST) {
+		simulation_logger << "Fixed: lt_ss: Will scmp" << std::endl;
+		Node* resSign = &simplify((Extract(BitsExt - 1, BitsExt - 1, *ea.node)) & (~Extract(BitsExt - 1, BitsExt - 1, *eb.node)));
+		Node* res = nullptr;
+		if (BitsExt > 1) {
+			res = &simplify((~Extract(BitsExt - 2, BitsExt - 2, *ea.node)) & (Extract(BitsExt - 2, BitsExt - 2, *eb.node)));
+			for (int i = BitsExt - 3; i >= 0; i--) {
+				//simulation_logger << "i: " << i << std::endl;
+				Node* layer = &simplify((~Extract(i, i, *ea.node)) & (Extract(i, i, *eb.node)));
+				for (int j = BitsExt - 1; i < j; j--) { // Starting from layer 1 is important
+					//simulation_logger << "i: " << i << ", j: " << j << std::endl;
+					layer = &simplify(*layer & ~((Extract(j, j, *ea.node)) ^ (Extract(j, j, *eb.node))));
+				}
+				res = &simplify(*res | *layer);
+			}
+		}
+		tmp.node = (BitsExt > 1) ? &simplify(*res | *resSign) : resSign;
+	}
 
 	// TODO: Could be better
 	if (not a.is_fully_stable() or not b.is_fully_stable())
 		tmp.stability[0] = 0x0u;
 
+	// All bits of both operands are used
+	if (a.ls != nullptr or b.ls != nullptr) {
+		//simulation_logger << "Fixed: lt_ss: lsconc" << std::endl;
+		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
+	}
+
+	tmp.debug_assert();
 	return tmp;
+}
+
+template<size_t BitsY, size_t BitsA, size_t BitsB>
+CXXRTL_ALWAYS_INLINE
+value<BitsY> ge_uu(const value<BitsA> &a, const value<BitsB> &b) {
+//	constexpr size_t BitsExt = max(BitsA, BitsB);
+//	value<BitsY> tmp = value<BitsY> { !a.template zext<BitsExt>().ucmp(b.template zext<BitsExt>()) ? 1u : 0u };
+    return not_u<BitsY>(lt_uu<BitsY>(a, b));
+}
+
+template<size_t BitsY, size_t BitsA, size_t BitsB>
+CXXRTL_ALWAYS_INLINE
+value<BitsY> ge_ss(const value<BitsA> &a, const value<BitsB> &b) {
+//	constexpr size_t BitsExt = max(BitsA, BitsB);
+//	value<BitsY> tmp = value<BitsY> { !a.template sext<BitsExt>().scmp(b.template sext<BitsExt>()) ? 1u : 0u };
+    return not_s<BitsY>(lt_ss<BitsY>(a, b));
 }
 
 template<size_t BitsY, size_t BitsA, size_t BitsB>

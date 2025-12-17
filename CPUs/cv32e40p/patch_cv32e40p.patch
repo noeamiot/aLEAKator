@@ -1,11 +1,11 @@
 --- ../../../build/examples/CPUs/cv32e40p/cxxrtl_cv32e40p.cpp	2025-08-12 12:43:17.052340348 +0200
 +++ cxxrtl_cv32e40p.cpp	2025-08-12 12:45:50.482849564 +0200
-@@ -826,10 +826,19 @@
- 	// cell \_2981_
- 	p___617__ = or_uu<1>(p___616__, p___449__);
- 	// \src: ./cv32e40p_gen_verilog/cv32e40p_load_store_unit.v:282.26-282.94
- 	// cell \_5088_
- 	p_u__top_2e_core__i_2e_load__store__unit__i_2e_data__addr__int = symb_mux(p_u__top_2e_core__i_2e_id__stage__i_2e_prepost__useincr__ex__o.curr, p___2104__, p_u__top_2e_core__i_2e_alu__operand__a__ex.curr);
+@@ -1991,10 +1991,19 @@
+	// cell \_3086_
+	p___700__ = or_uu<1>(p___699__, p___536__);
+	// \src: ./cv32e40p_gen_verilog/cv32e40p_load_store_unit.v:282.26-282.94
+	// cell \_5138_
+	p_u__top_2e_core__i_2e_load__store__unit__i_2e_data__addr__int = symb_mux(p_u__top_2e_core__i_2e_id__stage__i_2e_prepost__useincr__ex__o.curr, p___2129__, p_u__top_2e_core__i_2e_alu__operand__a__ex.curr);
 +    if (p_u__top_2e_core__i_2e_data__req__ex.curr.data[0] and Extract(31, 20, *p_u__top_2e_core__i_2e_load__store__unit__i_2e_data__addr__int.node).nature != CONST) {
 +        std::cout << "Concretizing lsu MSBs, because there is a read this cycle" << std::endl;
 +        p_u__top_2e_core__i_2e_load__store__unit__i_2e_data__addr__int.setNode(&Concat(
@@ -15,8 +15,8 @@
 +        ));
 +        p_u__top_2e_core__i_2e_load__store__unit__i_2e_data__addr__int.debug_assert();
 +    }
- 	// \full_case: 1
- 	// \parallel_case: 1
- 	// \src: ./cv32e40p_gen_verilog/cv32e40p_alu.v:257.3-266.10
- 	// cell \_4272_
- 	p___1391__.slice<1>() = eq_uu<1>(p_u__top_2e_core__i_2e_alu__operator__ex_40_5_40_.curr.concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_4_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_3_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_2_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_1_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_0_40_.curr).val(), value<6>{0x9u});
+	// \full_case: 1
+	// \parallel_case: 1
+	// \src: ./cv32e40p_gen_verilog/cv32e40p_alu.v:259.56-259.56|./cv32e40p_gen_verilog/cv32e40p_alu.v:257.3-266.10
+	// cell \_4333_
+	p___1434__.slice<1>() = eq_uu<1>(p_u__top_2e_core__i_2e_alu__operator__ex_40_5_40_.curr.concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_4_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_3_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_2_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_1_40_.curr).concat(p_u__top_2e_core__i_2e_alu__operator__ex_40_0_40_.curr).val(), value<6>{0x9u});

@@ -48,7 +48,7 @@ proc;
 pmuxtree;
 
 # These signals must be split for cxxrtl to not identify false logic loops
-select -module ibex_simple_system u_top.u_ibex_core.cs_registers_i.pc_wb_i u_top.u_ibex_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.fetch_addr_q u_top.u_ibex_core.ex_block_i.genblk3.gen_multdiv_fast.multdiv_i.imd_val_q_i u_top.u_ibex_core.cs_registers_i.mcountinhibit_q u_top.u_ibex_core.cs_registers_i.dcsr_q u_top.u_ibex_core.cs_registers_i.csr_mtvec_o u_top.u_ibex_core.cs_registers_i.csr_depc_o u_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q u_top.crash_dump_o
+select -module ibex_simple_system u_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs u_top.u_ibex_core.cs_registers_i.pc_wb_i u_top.u_ibex_core.if_stage_i.gen_prefetch_buffer.prefetch_buffer_i.fetch_addr_q u_top.u_ibex_core.ex_block_i.genblk3.gen_multdiv_fast.multdiv_i.imd_val_q_i u_top.u_ibex_core.cs_registers_i.mcountinhibit_q u_top.u_ibex_core.cs_registers_i.dcsr_q u_top.u_ibex_core.cs_registers_i.csr_mtvec_o u_top.u_ibex_core.cs_registers_i.csr_depc_o u_top.u_ibex_core.cs_registers_i.cpuctrlsts_part_q u_top.crash_dump_o
 splitnets -format @@;
 select -clear;
 

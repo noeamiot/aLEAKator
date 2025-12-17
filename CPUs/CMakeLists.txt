@@ -51,7 +51,7 @@ function(gen_program cpu program)
         COMMAND echo 'void ${program}::symbols_implem\(\)' { >> programs/${program}_symbols.cpp
         COMMAND ${CLANG_PATH}/bin/llvm-nm --print-size ${target} | while read -r addr size type name\; do echo \"symbols_[\\\"$$name\\\"] = {0x$$addr, 0x$$size}\;\"\; done >> programs/${program}_symbols.cpp
         COMMAND echo "}" >> programs/${program}_symbols.cpp
-        DEPENDS ${target} cxxrtl_${cpu}.h
+        DEPENDS ${target}# cxxrtl_${cpu}.h
     )
     gen_mem(${program} ${target})
 endfunction()
@@ -92,37 +92,53 @@ function(gen_all_programs cpu generated_programs)
     return(PROPAGATE cpu generated_programs)
 endfunction()
 
+# There is a third, optionnal argument which is a list of configs
 function(gen_cpu cpu generated_programs)
         string(REGEX REPLACE "([^;]+)" "programs/\\1/\\1_setup.cpp;${CMAKE_CURRENT_BINARY_DIR}/programs/\\1_program.cpp;${CMAKE_CURRENT_BINARY_DIR}/programs/\\1_symbols.cpp" generated_load_symb "${generated_programs}")
         string(REGEX REPLACE "([^;]+)" "programs/\\1/\\1_setup.h" programs_headers "${generated_programs}")
         string(REGEX REPLACE "([^;]+)" "programs/\\1/" programs_dirs "${generated_programs}")
 
-        add_executable(${cpu})
-        target_sources(${cpu}
-            PRIVATE
-            simulate.cpp
-            ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}.cpp
-            ${generated_load_symb}
-            PUBLIC
-            ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}.h
-            ${CMAKE_CURRENT_BINARY_DIR}/programs_include.h
-            ${CMAKE_CURRENT_BINARY_DIR}/programs_instance.h
-            ${programs_headers}
-            ./${cpu}_program.h
-            ../program_setup.h
-        )
-        target_include_directories(${cpu}
-            PUBLIC
-            ${CXXRTL_PATH}
-            ${VERIFMSI_PATH}
-            ${LSS_PATH}
-            ${ALEAKATOR_PATH}
-            ${CMAKE_CURRENT_BINARY_DIR}
-            ${programs_dirs}
-            ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../
-        )
-        target_link_libraries(${cpu} PUBLIC ${Boost_LIBRARIES} lss aleakator verif_msi_pp)    
+        if(ARGC LESS 3)
+            set(configs "_base")
+        else()
+            set(configs ${ARGV2})
+            list(TRANSFORM configs PREPEND "_")
+        endif()
+
+        foreach(cfg IN LISTS configs)
+            message(STATUS "Adding config ${cfg} for CPU ${cpu}")
+            if (cfg STREQUAL "_base")
+                set(cfg "")
+            endif()
+
+            add_executable(${cpu}${cfg})
+            target_compile_definitions(${cpu}${cfg} PRIVATE CFG${cfg})
+            target_sources(${cpu}${cfg}
+                PRIVATE
+                simulate.cpp
+                ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}${cfg}.cpp
+                ${generated_load_symb}
+                PUBLIC
+                ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}${cfg}.h
+                ${CMAKE_CURRENT_BINARY_DIR}/programs_include.h
+                ${CMAKE_CURRENT_BINARY_DIR}/programs_instance.h
+                ${programs_headers}
+                ./${cpu}_program.h
+                ../program_setup.h
+            )
+            target_include_directories(${cpu}${cfg}
+                PUBLIC
+                ${CXXRTL_PATH}
+                ${VERIFMSI_PATH}
+                ${LSS_PATH}
+                ${ALEAKATOR_PATH}
+                ${CMAKE_CURRENT_BINARY_DIR}
+                ${programs_dirs}
+                ${CMAKE_CURRENT_SOURCE_DIR}
+                ${CMAKE_CURRENT_SOURCE_DIR}/../
+            )
+            target_link_libraries(${cpu}${cfg} PUBLIC ${Boost_LIBRARIES} lss aleakator verif_msi_pp)
+    endforeach()
 endfunction()
 
 # Loop through all the CPUs
