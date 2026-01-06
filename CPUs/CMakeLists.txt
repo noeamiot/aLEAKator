@@ -51,7 +51,7 @@ function(gen_program cpu program)
         COMMAND echo 'void ${program}::symbols_implem\(\)' { >> programs/${program}_symbols.cpp
         COMMAND ${CLANG_PATH}/bin/llvm-nm --print-size ${target} | while read -r addr size type name\; do echo \"symbols_[\\\"$$name\\\"] = {0x$$addr, 0x$$size}\;\"\; done >> programs/${program}_symbols.cpp
         COMMAND echo "}" >> programs/${program}_symbols.cpp
-        DEPENDS ${target}# cxxrtl_${cpu}.h
+        DEPENDS ${target}
     )
     gen_mem(${program} ${target})
 endfunction()
@@ -81,6 +81,7 @@ function(gen_all_programs cpu generated_programs)
 
     string(REGEX REPLACE "([^;]+)" "#include\"\\1_setup.h\"" includes "${generated_programs}")
     string(REGEX REPLACE "([^;]+)" "programs[\"\\1\"]=std::make_unique<\\1>()" instances "${generated_programs}")
+    string(REGEX REPLACE "([^;]+)" "programs/\\1_program.cpp;programs/\\1_symbols.cpp" progs "${generated_programs}")
     list(JOIN includes "\\n" includes)
     list(JOIN instances "\;\\n" instances)
     add_custom_command(
@@ -89,6 +90,7 @@ function(gen_all_programs cpu generated_programs)
         COMMAND /bin/echo -e \'${instances}\;\' > programs_instance.h
         DEPENDS
     )
+    add_custom_target(${cpu}_all_programs DEPENDS programs_include.h programs_instance.h ${progs})
     return(PROPAGATE cpu generated_programs)
 endfunction()
 
@@ -137,6 +139,7 @@ function(gen_cpu cpu generated_programs)
                 ${CMAKE_CURRENT_SOURCE_DIR}
                 ${CMAKE_CURRENT_SOURCE_DIR}/../
             )
+            add_dependencies(${cpu}${cfg} ${cpu}_all_programs)
             target_link_libraries(${cpu}${cfg} PUBLIC ${Boost_LIBRARIES} lss aleakator verif_msi_pp)
     endforeach()
 endfunction()

@@ -1164,7 +1164,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.data[n] = wide_result[n];
 		}
 		result.data[result.chunks - 1] &= result.msb_mask;
-		if (ResultBits != node->width) {
+		if (ResultBits > static_cast<size_t>(node->width)) {
 			result.node = &simplify(ZeroExt(ResultBits - node->width, *node) * ZeroExt(ResultBits - other.node->width, *other.node));
 		} else if (ResultBits < static_cast<size_t>(node->width)) {
 			result.node = &Extract(ResultBits - 1, 0, simplify(*node * *other.node));
