@@ -1,6 +1,13 @@
 set(cpu "aubrac")
 set(configurations "unsecure;secure;secfast")
 
+file(GLOB_RECURSE dependency_check rtl/*.sv)
+list(LENGTH dependency_check number_deps)
+if (number_deps EQUAL 0)
+    message(STATUS "Empty rtl sources for Aubrac, will not build this CPU.")
+    return()
+endif()
+
 foreach(cfg IN LISTS configurations)
     set(generated_files "cxxrtl_${cpu}_${cfg}.h;cxxrtl_${cpu}_${cfg}.cpp;${cpu}_${cfg}.tsv")
 

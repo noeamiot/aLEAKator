@@ -22,7 +22,36 @@ You need a custom version of yosys, in particular the custom cxxrtl backend behi
 
 It is available [on github](https://github.com/noeamiot/yosys).
 
+Capstone is now also a dependency, you can install either your distribution package or [from github](https://github.com/capstone-engine/capstone).
+
 Documentation is WIP.
+
+If you want to try aLEAKator as-is you may build the docker container provided in the repo.
+If you want to modify the programs simulated on the CPUs, you must install dependencies and build
+locally all needed parts (documentation on this is still WIP).
+
+# How to use the docker image
+
+While in the root of the repository, run:
+```
+sudo docker build -t aleakator .
+```
+It should take some time to pull dependencies, build them and then build aleakator. On a medium
+end laptop, expect around 20 minutes. Please note that building is heavy in RAM, consider adding
+swap space.
+
+Once the build is done, verifications can be started like so:
+```
+docker run --interactive --rm --entrypoint /bin/bash aleakator:latest
+./CPUs/ibex/ibex dom_and --twg
+./CPUs/ibex/ibex dom_and_unsecure --twg --show-expr --detailed
+```
+It will verify the dom_and and dom_and_unsecure programs in ibex and show results in the terminal
+you may save this output somewhere. Also, in the container the folder `./CPUs/ibex/leak_data/...`
+will be populated with folders for each verification. You may add
+`-v /tmp/aleakator:/src/aleakator/build/CPUs/ibex/leak_data/` to the command starting docker to
+retrieve these files easilly in you host filesystem. The output formating is not straightforward
+for now, but will be improved soon.
 
 # Stability
 
@@ -39,6 +68,11 @@ Set the path for the clang 17 toolchain, then:
 mkdir build
 cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j
+```
+
+Alternatively, you can compile a specific target, for example:
+```
+make -j cortex_m4
 ```
 
 You can also build in Debug mode, for the debug symbols to be enabled. Please note that the Release
