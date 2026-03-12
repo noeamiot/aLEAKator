@@ -34,6 +34,11 @@ locally all needed parts (documentation on this is still WIP).
 
 While in the root of the repository, run:
 ```
+docker buildx build --network=host -o type=image --tag aleakator .
+```
+
+Without buildx, the deprecated docker way of building is:
+```
 sudo docker build -t aleakator .
 ```
 It should take some time to pull dependencies, build them and then build aleakator. On a medium
@@ -42,7 +47,7 @@ swap space.
 
 Once the build is done, verifications can be started like so:
 ```
-docker run --interactive --rm --entrypoint /bin/bash aleakator:latest
+docker run --network=host --interactive --rm --entrypoint /bin/bash aleakator:latest
 ./CPUs/ibex/ibex dom_and --twg
 ./CPUs/ibex/ibex dom_and_unsecure --twg --show-expr --detailed
 ```
