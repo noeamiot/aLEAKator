@@ -123,6 +123,8 @@ class Manager {
         unsigned int leaking_cycles_ = 0;
         std::map<unsigned int, unsigned int> leaks_per_cycles_{};
 
+        // Leakage summary
+        std::ofstream leakage_file_;
 
         // Perfs statistics
         std::chrono::steady_clock::time_point begin_measure_time_;
@@ -136,6 +138,8 @@ class Manager {
 
     public:
         Manager (cxxrtl::module& top, Configuration config);
+        ~Manager();
+
         bool step(cxxrtl::module& top);
         unsigned int get_steps() const { return steps_; }
         std::vector<Node *> get_shares(Node& node, int nb_shares) const {

@@ -49,6 +49,7 @@ Manager::Manager (cxxrtl::module& top, Configuration config) : config_(config) {
 
     // The = operator is a move operator, this is valid
     simulation_logger = std::ofstream{config_.working_path_/"simulation.txt"};
+    leakage_file_ = std::ofstream{config_.working_path_/"leaks.txt"};
 
     // Parse circuit and fil internal maps
     std::ofstream parse_log_file(config_.working_path_/"parsed_dependencies.txt");
@@ -58,19 +59,26 @@ Manager::Manager (cxxrtl::module& top, Configuration config) : config_(config) {
     // We remove inputs and memories from this list to reduce previsible noise
     std::ofstream independent_wires_file(config_.working_path_/"independent_wires.txt");
     for(const auto& [name, element] : dbg_items_.table) {
-        if (!this->topology_.contains(name) and !(element.begin()->flags & CXXRTL_INPUT)
+        std::string filtered_name = name;
+        std::replace(filtered_name.begin(), filtered_name.end(), '.', ' ');
+        if (!this->topology_.contains(filtered_name) and !(element.begin()->flags & CXXRTL_INPUT)
           and !(element.begin()->type == CXXRTL_ALIAS) and !(element.begin()->type == CXXRTL_MEMORY)
           and !(element.begin()->next == nullptr)) {
-            independent_wires_file << name << " not found, size: " << element.size() << std::endl;
+            independent_wires_file << filtered_name << " not found, size: " << element.size() << std::endl;
         } else if(element.size() > 1) {
-            this->split_wires_.insert(name);
-            parse_log_file << name << std::endl;
+            this->split_wires_.insert(filtered_name);
+            parse_log_file << filtered_name << std::endl;
         }
     }
     independent_wires_file.close();
     parse_log_file.close();
 
     this->init_database();
+}
+
+Manager::~Manager() {
+    simulation_logger.close();
+    leakage_file_.close();
 }
 
 bool Manager::step(cxxrtl::module& top) {
@@ -147,6 +155,8 @@ void Manager::init_database() {
 
     // Iterate over the debug structure
     for(const auto& [name, element] : dbg_items_.table) {
+        std::string filtered_name = name;
+        std::replace(filtered_name.begin(), filtered_name.end(), '.', ' ');
         // Now pre splitted values and parted values are taken in account, the same way
         if (element.size() > 1) {
             bool contains_wire = false;
@@ -170,11 +180,11 @@ void Manager::init_database() {
 
             // Always add registers and outputs to glitch verification
             if (contains_wire || contains_output)
-                registers_and_outputs_.insert(name);
+                registers_and_outputs_.insert(filtered_name);
 
             Entry entry{(contains_wire ? Entry::WIRE : Entry::VALUE), total_size, contains_output,
                 nullptr, nullptr};
-            database_[0][name] = entry;
+            database_[0][filtered_name] = entry;
         } else {
             const auto& part = *(element.begin());
 
@@ -184,11 +194,11 @@ void Manager::init_database() {
 
             // Always add registers and outputs to glitch verification
             if (part.type == CXXRTL_WIRE || (part.flags & CXXRTL_OUTPUT))
-                registers_and_outputs_.insert(name);
+                registers_and_outputs_.insert(filtered_name);
 
             Entry entry{(part.type == CXXRTL_WIRE ? Entry::WIRE : Entry::VALUE),
                 static_cast<uint16_t>(part.width), static_cast<bool>(part.flags & CXXRTL_OUTPUT), nullptr, nullptr};
-            database_[0][name] = entry;
+            database_[0][filtered_name] = entry;
         }
     }
 
@@ -234,12 +244,14 @@ void Manager::build_database() {
     database_memory_[1].clear();
 
     for(const auto& [name, element] : dbg_items_.table) {
+        std::string filtered_name = name;
+        std::replace(filtered_name.begin(), filtered_name.end(), '.', ' ');
         // Exceptionally split wires are handled after
-        if (not config_.BIT_VERIF_ and config_.EXCEPTIONS_WORD_VERIF_.contains(name)) continue;
+        if (not config_.BIT_VERIF_ and config_.EXCEPTIONS_WORD_VERIF_.contains(filtered_name)) continue;
 
         if (element.size() > 1) {
             std::vector<Node*> nodes_to_merge;
-            std::vector<std::set<Node*>> lss_to_merge(database_[0][name].width_);
+            std::vector<std::set<Node*>> lss_to_merge(database_[0][filtered_name].width_);
             bool applied_stability = false;
             bool is_leakset_empty = true;
             unsigned int current_position = 0;
@@ -273,11 +285,11 @@ void Manager::build_database() {
 
             // Add inputs of a gate to verif if the gate applied stabilty
             if (applied_stability and config_.USE_STABILITY_) {
-                inputs_of_stabilized_gate_.insert(topology_[name].cbegin(), topology_[name].cend());
+                inputs_of_stabilized_gate_.insert(topology_[filtered_name].cbegin(), topology_[filtered_name].cend());
             }
 
-            database_[0][name].expr_ = merged_nodes;
-            database_[0][name].leakset_ = merged_ls;
+            database_[0][filtered_name].expr_ = merged_nodes;
+            database_[0][filtered_name].leakset_ = merged_ls;
         } else {
             const auto& part = *(element.begin());
             bool applied_stability = false;
@@ -286,7 +298,7 @@ void Manager::build_database() {
             // Memory are handled in a separate map
             if (part.type == CXXRTL_MEMORY) {
                 for (const auto& [index, prev, curr] : part.leakref->leak_mem()) {
-                    std::string cell_name = std::string("mem_") + name + std::string("_") + std::to_string(index);
+                    std::string cell_name = std::string("mem_") + filtered_name + std::string("_") + std::to_string(index);
                     database_memory_[0][cell_name] = Entry{Entry::WIRE, 32, false, curr.first, curr.second};
                     database_memory_[1][cell_name] = Entry{Entry::WIRE, 32, false, prev.first, prev.second};
                 }
@@ -302,39 +314,41 @@ void Manager::build_database() {
 
             // Add inputs of a gate to verif if the gate applied stabilty
             if (applied_stability and config_.USE_STABILITY_) {
-                inputs_of_stabilized_gate_.insert(topology_[name].cbegin(), topology_[name].cend());
+                inputs_of_stabilized_gate_.insert(topology_[filtered_name].cbegin(), topology_[filtered_name].cend());
             }
 
             // Special case for multiplexors, as dead branch must be verified if the selector applied stability (even if the selected entry is fully unstable)
             // If is sufficent to not check for this case in the splitwires part as selectors can only be one bit wide
-            if (config_.USE_STABILITY_ and applied_stability and mux_structures_.contains(name)) {
+            if (config_.USE_STABILITY_ and applied_stability and mux_structures_.contains(filtered_name)) {
                 if (part.curr[0] == 0x0u) {
                     // Dead branch is the S=1 so port B
-                    inputs_of_stabilized_gate_.insert(mux_structures_[name].second.cbegin(), mux_structures_[name].second.cend());
+                    inputs_of_stabilized_gate_.insert(mux_structures_[filtered_name].second.cbegin(), mux_structures_[filtered_name].second.cend());
                 } else {
                     // Dead branch is the S=0 so port A
-                    inputs_of_stabilized_gate_.insert(mux_structures_[name].first.cbegin(), mux_structures_[name].first.cend());
+                    inputs_of_stabilized_gate_.insert(mux_structures_[filtered_name].first.cbegin(), mux_structures_[filtered_name].first.cend());
                 }
             }
 
             auto [node, ls] = part.leakref->leak_single();
-            database_[0][name].expr_ = node;
-            database_[0][name].leakset_ = ls;
+            database_[0][filtered_name].expr_ = node;
+            database_[0][filtered_name].leakset_ = ls;
         }
     }
 
     // Retrospectively split exception signals, only valid for word verif
     if (not config_.BIT_VERIF_) {
         for (const auto& [signal, width] : config_.EXCEPTIONS_WORD_VERIF_) {
-            bool is_input_of_stab_gate = inputs_of_stabilized_gate_.contains(signal);
+        std::string filtered_name = signal;
+        std::replace(filtered_name.begin(), filtered_name.end(), '.', ' ');
+            bool is_input_of_stab_gate = inputs_of_stabilized_gate_.contains(filtered_name);
 
-            auto [node_to_split, ls_to_split] = dbg_items_.table[signal].begin()->leakref->leak_single();
+            auto [node_to_split, ls_to_split] = dbg_items_.table[filtered_name].begin()->leakref->leak_single();
             for (int i = 0; i < node_to_split->width / width; i++) {
                 int up_border = (((i+1)*width < node_to_split->width) ? (i+1)*width : node_to_split->width) - 1;
                 Node* node = &simplify(Extract(up_border, i*width, *node_to_split));
                 leaks::LeakSet* ls = leaks::extract(ls_to_split, i*width, up_border);
 
-                std::string split_name = std::string("split_exception_") + signal + std::string("_") + std::to_string(i);
+                std::string split_name = std::string("split_exception_") + filtered_name + std::string("_") + std::to_string(i);
                 database_[0][split_name].expr_ = node;
                 database_[0][split_name].leakset_ = ls;
 
@@ -344,7 +358,7 @@ void Manager::build_database() {
             }
 
             // In case it was tagged for verif, remove it
-            inputs_of_stabilized_gate_.erase(signal);
+            inputs_of_stabilized_gate_.erase(filtered_name);
         }
     }
 
@@ -483,34 +497,42 @@ bool Manager::verify() {
 //    std::cout << "Skipped verification for " << total_TWG_ << " sets by transition with glitches in total for now" << std::endl;
 //    std::cout << "---" << std::endl;
 
-    if (config_.TRACK_LEAKS_) {
-        std::cout << "Tracking root leaks" << std::endl;
-        std::set<std::string> roots;
-        std::map<std::string, bool> cache;
-
-        for (const auto& wire : vwog_leaking)
-            track_parents(cache, roots, wire, 0);
-        for (const auto& wire : vwg_leaking)
-            track_parents(cache, roots, wire, 0);
-        for (const auto& wire : twog_leaking)
-            track_parents(cache, roots, wire, 0);
-        for (const auto& wire : twg_leaking)
-            track_parents(cache, roots, wire, 0);
-
-        std::cout << "Ended tracking root leaks, found: " << roots.size() << std::endl;
-        if (config_.DETAIL_LEAKS_INFORMATION_)
-            detail_leaks_all(roots);
-        else
-            std::ranges::copy(roots, std::ostream_iterator<std::string>(std::cout, " "));
-    } else if (config_.DETAIL_LEAKS_INFORMATION_) {
-        detail_leaks_vwog(vwog_leaking);
-        detail_leaks_twog(twog_leaking);
-        detail_leaks_vwg(vwg_leaking);
-        detail_leaks_twg(twg_leaking);
-    }
-
     uint32_t leaks_nb = vwog_leaking.size() + twog_leaking.size() + vwg_leaking.size() + twg_leaking.size();
     leaks_per_cycles_[measure_cycle()] = leaks_nb;
+
+    if (leaks_nb > 0) {
+        if (config_.TRACK_LEAKS_) {
+            std::cout << "Tracking root leaks for measure cycle: " << measure_cycle() << std::endl;
+            std::set<std::string> roots;
+            std::map<std::string, bool> cache;
+
+            for (const auto& wire : vwog_leaking)
+                track_parents(cache, roots, wire, 0);
+            for (const auto& wire : vwg_leaking)
+                track_parents(cache, roots, wire, 0);
+            for (const auto& wire : twog_leaking)
+                track_parents(cache, roots, wire, 0);
+            for (const auto& wire : twg_leaking)
+                track_parents(cache, roots, wire, 0);
+
+            std::cout << "Ended tracking root leaks, found: " << roots.size() << std::endl;
+            if (config_.DETAIL_LEAKS_INFORMATION_) {
+                detail_leaks_all(roots);
+            } else {
+                leakage_file_ << "Cycle: " << measure_cycle() << std::endl;
+                for (const auto& wire : roots)
+                    leakage_file_ << wire << std::endl;
+                leakage_file_ << "----------------------------" << std::endl;
+            }
+        } else if (config_.DETAIL_LEAKS_INFORMATION_) {
+            detail_leaks_vwog(vwog_leaking);
+            detail_leaks_twog(twog_leaking);
+            detail_leaks_vwg(vwg_leaking);
+            detail_leaks_twg(twg_leaking);
+        } else {
+            leakage_file_ << "Cycle: " << measure_cycle() << ", leakages: " << leaks_nb << std::endl;
+        }
+    }
 
     return (leaks_nb == 0);
 }
@@ -593,7 +615,7 @@ bool Manager::verify_higher_order_spatial() {
 
                 Node* to_verif = &Concat(accumulate_verif_nodes);
 
-                // Here it is ok to use is_secure even in BIT mode only because in higher order case, the method 
+                // Here it is ok to use is_secure even in BIT mode only because in higher order case, the method
                 // does not verify by bit but by word (here only containing needed bits)
                 if (not this->is_secure_vwog(to_verif, outputs)) {
                     vwog_leaking.insert("TODO");
@@ -759,13 +781,13 @@ exit_verify_ho_temporal:
 // This function is only called on leaking nodes, it is safe to assume that the currently queried
 // wire is leaking
 void Manager::track_parents(std::map<std::string, bool>& cache, std::set<std::string>& roots, const std::string& needle, int depth) {
-    // Some terminal conditions, memories are roots if they leak and we do not explore already explored paths
-    if (needle.starts_with("mem_")) {
-        //std::cout << depth << ":Wire " << needle << " is memory, considered root leakage." << std::endl;
-        roots.insert(needle);
-        cache[needle] = true;
-        return;
-    }
+    // If we attained a synchronous element that was not the initial wire, stop here this leakage is due to previous cycle.
+//    if ((needle.starts_with("mem_") or database_[0].at(needle).type_ == Entry::WIRE) and depth > 0) {
+//        std::cout << depth << ": synchrounous element found, stopping on this path: " << needle << std::endl;
+//        roots.insert(needle);
+//        cache[needle] = true;
+//        return;
+//    }
 
     if (cache.contains(needle)) {
         //std::cout << depth << ": Evincing, in cache: " << needle << std::endl;
@@ -774,13 +796,9 @@ void Manager::track_parents(std::map<std::string, bool>& cache, std::set<std::st
     cache[needle] = true;
 
     if (not topology_.contains(needle)) {
-        //std::cout << depth << ": " << needle << " is not in topo map" << std::endl;
-        return;
-    }
-
-    if (database_[0].at(needle).type_ == Entry::WIRE) {
-        //std::cout << depth << ": ROOT FOUND Wire " << needle << " is synchronous, considered root leakage." << std::endl;
+        //std::cout << depth << ": " << needle << " is not in topo map, considering it as ROOT" << std::endl;
         roots.insert(needle);
+        //std::abort();
         return;
     }
 
@@ -788,10 +806,18 @@ void Manager::track_parents(std::map<std::string, bool>& cache, std::set<std::st
     // If none leak, this is the root of the leak
     bool at_least_one_leaking_parent = false;
     std::set<std::string> parents = this->topology_[needle];
-    //if (parents.empty())
-    //    std::cout << depth << ":Wire " << needle << " has no parents." << std::endl;
+//    if (parents.empty())
+//        std::cout << depth << ":Wire " << needle << " has no parents." << std::endl;
 
     for (const auto& wire : parents) {
+        if (not database_[0].contains(wire)) {
+            std::cerr << "Wire not in db" << std::endl;
+            std::abort();
+        }
+        if (wire.starts_with("mem_") or database_[0].at(wire).type_ == Entry::WIRE) {
+            //std::cout << depth << ": Parent is synchronous, ignoring" << std::endl;
+            continue;
+        }
         bool is_leaking = false;
         if (cache.contains(wire)) {
             //std::cout << depth << ":Parent is in cache: " << wire << std::endl;
@@ -803,7 +829,7 @@ void Manager::track_parents(std::map<std::string, bool>& cache, std::set<std::st
             is_leaking |= (not is_leaking and config_.VERIF_TRANSITION_WO_GLITCHES_ and not this->is_secure_twog(database_[0].at(wire), database_[1].at(wire)));
             is_leaking |= (not is_leaking and config_.VERIF_VALUE_WO_GLITCHES_ and not this->is_secure_vwog(database_[0].at(wire).expr_, database_[0].at(wire).is_output_ ? 1 : 0));
 
-            // If the parent is leaking and not in cache, look for its root 
+            // If the parent is leaking and not in cache
             if (is_leaking) {
                 //std::cout << depth << ":Checking parent: " << wire << std::endl;
                 track_parents(cache, roots, wire, depth+1);
@@ -823,21 +849,21 @@ void Manager::detail_wire_info(const std::string& wire) {
     std::string handled_wire;
     int idx = 0;
     if (wire.starts_with("mem_") or wire.starts_with("split_exception_")) {
-        std::cout << "Wire is either memory or a splited exception, extracting data from name." << std::endl;
+        leakage_file_ << "Wire is either memory or a splited exception, extracting data from name." << std::endl;
         handled_wire = wire.substr(wire.find_first_of("_")+1, wire.find_last_of("_")-wire.find_first_of("_")-1);
         idx = std::stoi(wire.substr(wire.find_last_of("_")+1));
     } else {
         handled_wire = wire;
     }
+    std::replace( handled_wire.begin(), handled_wire.end(), '.', ' ');
 
-    std::cout << "Handled wire name is: " << handled_wire << std::endl;
+    leakage_file_ << "Handled wire name is: " << handled_wire << std::endl;
 
     if (split_wires_.contains(handled_wire))
-        std::cout << "Wire is a splitted at least once." << std::endl;
+        leakage_file_ << "Wire is a splitted at least once." << std::endl;
 
-    // TODO: Maybe do better
     if (not dbg_items_.table.contains(handled_wire)) {
-        std::cout << "Wire is not in dbg_items, it may be due to it being splitted in synth." << std::endl;
+        leakage_file_ << "Wire is not in dbg_items, it may be due to it being splitted in synth." << std::endl;
         return;
     }
 
@@ -848,117 +874,128 @@ void Manager::detail_wire_info(const std::string& wire) {
         if (type == "keep")
             continue;
 
-        std::cout << "Metadata: " << type << std::endl;
-        std::cout << "Value: ";
+        leakage_file_ << "Metadata: " << type << std::endl;
+        leakage_file_ << "Value: ";
         switch (data.value_type) {
             case cxxrtl::metadata::STRING:
-                std::cout << data.as_string() << std::endl;
+                leakage_file_ << data.as_string() << std::endl;
                 break;
             case cxxrtl::metadata::UINT:
-                std::cout << data.as_uint() << std::endl;
+                leakage_file_ << data.as_uint() << std::endl;
                 break;
             case cxxrtl::metadata::SINT:
-                std::cout << data.as_sint() << std::endl;
+                leakage_file_ << data.as_sint() << std::endl;
                 break;
             case cxxrtl::metadata::DOUBLE:
-                std::cout << data.as_sint() << std::endl;
+                leakage_file_ << data.as_sint() << std::endl;
                 break;
             default:
-                std::cout << "Could not determine type to display" << std::endl;
+                leakage_file_ << "Could not determine type to display" << std::endl;
                 break;
         }
     }
 
-    //std::cout << "Verilog wire name: " << dbg_items_[wire].attrs << std::endl;
+    //leakage_file_ << "Verilog wire name: " << dbg_items_[wire].attrs << std::endl;
     if (dbg_items_.is_memory(handled_wire)) {
-        std::cout << "Wire is a memory, leaking index is: " << idx << std::endl;
-        std::cout << "Memory depth is: " << dbg_items_.at(handled_wire).at(0).depth << std::endl;
+        leakage_file_ << "Wire is a memory, leaking index is: " << idx << std::endl;
+        leakage_file_ << "Memory depth is: " << dbg_items_.at(handled_wire).at(0).depth << std::endl;
     } else if (config_.EXCEPTIONS_WORD_VERIF_.contains(handled_wire)) {
-        std::cout << "Wire is a split exception, leaking index is: " << idx << std::endl;
+        leakage_file_ << "Wire is a split exception, leaking index is: " << idx << std::endl;
     }
 
     uint32_t flags = dbg_items_.at(handled_wire).at(0).flags;
     if ((flags & CXXRTL_INPUT) or (flags & CXXRTL_INOUT))
-        std::cout << "Wire is an input" << std::endl;
+        leakage_file_ << "Wire is an input" << std::endl;
     if ((flags & CXXRTL_OUTPUT) or (flags & CXXRTL_INOUT))
-        std::cout << "Wire is an output" << std::endl;
+        leakage_file_ << "Wire is an output" << std::endl;
 
     if (flags & CXXRTL_DRIVEN_COMB)
-        std::cout << "Wire is driven by a combinatorial gate" << std::endl;
+        leakage_file_ << "Wire is driven by a combinatorial gate" << std::endl;
     else if (flags & CXXRTL_DRIVEN_SYNC)
-        std::cout << "Wire is driven by a synchronous gate" << std::endl;
+        leakage_file_ << "Wire is driven by a synchronous gate" << std::endl;
     else
-        std::cout << "Wire is not driven" << std::endl;
+        leakage_file_ << "Wire is not driven" << std::endl;
 
     // TODO: Not enough, will show one for splitted wires
-    std::cout << "Width of the wire: " << dbg_items_.at(handled_wire).at(0).width << std::endl;
+    leakage_file_ << "Width of the wire (if non-splitted): " << dbg_items_.at(handled_wire).at(0).width << std::endl;
 }
 
 void Manager::detail_leaks_vwog(const std::set<std::string>& wires) {
     for (const auto& wire : wires) {
-        std::cout << "Wire: " << wire << " is leaking in Value without glitches." << std::endl;
+        leakage_file_ << "Wire: " << wire << " is leaking in Value without glitches at measure cycle: " << measure_cycle() << std::endl;
         detail_wire_info(wire);
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            std::cout << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
         }
+        leakage_file_ << "----------------------------" << std::endl;
     }
 }
 
 void Manager::detail_leaks_twog(const std::set<std::string>& wires) {
     for (const auto& wire : wires) {
-        std::cout << "Wire: " << wire << " is leaking in Transition without glitches." << std::endl;
+        leakage_file_ << "Wire: " << wire << " is leaking in Transition without glitches at measure cycle: " << measure_cycle() << std::endl;
         detail_wire_info(wire);
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            std::cout << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
-            std::cout << "Its previous expression is: " << database_[1][wire].expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its previous expression is: " << database_[1][wire].expr_->verbatimPrint() << std::endl;
         }
+        leakage_file_ << "----------------------------" << std::endl;
     }
 }
 
 void Manager::detail_leaks_vwg(const std::set<std::string>& wires) {
     for (const auto& wire : wires) {
         detail_wire_info(wire);
-        std::cout << "Wire: " << wire << " is leaking in Value with glitches." << std::endl;
+        leakage_file_ << "Wire: " << wire << " is leaking in Value with glitches at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            std::cout << "Its current leakset is: ";
-            leaks::print_leakage(database_[0][wire].leakset_);
-            std::cout << std::endl;
+            leakage_file_ << "Its current leakset is: ";
+            leaks::print_leakage(database_[0][wire].leakset_, leakage_file_);
+            leakage_file_ << std::endl;
         }
+        leakage_file_ << "----------------------------" << std::endl;
     }
 }
 
 void Manager::detail_leaks_twg(const std::set<std::string>& wires) {
     for (const auto& wire : wires) {
         detail_wire_info(wire);
-        std::cout << "Wire: " << wire << " is leaking in Transition with glitches." << std::endl;
+        leakage_file_ << "Wire: " << wire << " is leaking in Transition with at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            std::cout << "Its current leakset is: ";
-            leaks::print_leakage(database_[0][wire].leakset_);
-            std::cout << std::endl;
-            std::cout << "Its previous leakset is: ";
-            leaks::print_leakage(database_[1][wire].leakset_);
-            std::cout << std::endl;
+            leakage_file_ << "Its current leakset is: ";
+            leaks::print_leakage(database_[0][wire].leakset_, leakage_file_);
+            leakage_file_ << std::endl;
+            leakage_file_ << "Its previous leakset is: ";
+            leaks::print_leakage(database_[1][wire].leakset_, leakage_file_);
+            leakage_file_ << std::endl;
         }
+        leakage_file_ << "----------------------------" << std::endl;
     }
 }
 
 void Manager::detail_leaks_all(const std::set<std::string>& wires) {
     for (const auto& wire : wires) {
         detail_wire_info(wire);
-        std::cout << "Wire: " << wire << "." << std::endl;
+        leakage_file_ << "Wire: " << wire << " at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
             // TODO: This does not handle splitted wires
             Entry& current = (database_[0].contains(wire)) ? database_[0][wire] : database_memory_[0][wire];
             Entry& previous = (database_[1].contains(wire)) ? database_[1][wire] : database_memory_[1][wire];
-            std::cout << "Its current expression is: " << current.expr_->verbatimPrint() << std::endl;
-            std::cout << "Its current leakset is: ";
-            leaks::print_leakage(current.leakset_);
-            std::cout << std::endl;
-            std::cout << "Its previous expression is: " << previous.expr_->verbatimPrint() << std::endl;
-            std::cout << "Its previous leakset is: ";
-            leaks::print_leakage(previous.leakset_);
-            std::cout << std::endl;
+            leakage_file_ << "Its current expression is: " << current.expr_->verbatimPrint() << std::endl;
+            if (config_.VERIF_VALUE_W_GLITCHES_ or config_.VERIF_TRANSITION_W_GLITCHES_) {
+                leakage_file_ << "Its current leakset is: ";
+                leaks::print_leakage(current.leakset_, leakage_file_);
+                leakage_file_ << std::endl;
+            }
+            if (config_.VERIF_TRANSITION_WO_GLITCHES_ or config_.VERIF_TRANSITION_W_GLITCHES_)
+                leakage_file_ << "Its previous expression is: " << previous.expr_->verbatimPrint() << std::endl;
+
+            if (config_.VERIF_TRANSITION_W_GLITCHES_) {
+                leakage_file_ << "Its previous leakset is: ";
+                leaks::print_leakage(previous.leakset_, leakage_file_);
+                leakage_file_ << std::endl;
+            }
         }
+        leakage_file_ << "----------------------------" << std::endl;
     }
 }
 
@@ -1185,7 +1222,7 @@ void Manager::stat() {
 
     std::cout << "Number of leaks for each cycle: " << std::endl;
     for (auto const& [cycle, leaks] : leaks_per_cycles_) {
-        //TODO: Temp: if (leaks == 0) continue;
+        if (leaks == 0) continue;
         std::cout << "Cycle: " << cycle << ", Leaks: " << leaks << std::endl;
     }
 }
@@ -1206,7 +1243,6 @@ void Manager::parse_circuit(std::ofstream& log) {
     // We volontarly do not accept @ and % symbols in order to fuse all splitted wires
     // (their format is name@bit@ or name%bit%)
     std::basic_regex regWires("\\\\[a-zA-Z0-9\\[\\]':._\\$\\/]+");
-    std::basic_regex regDots("\\.");
 
     log << "Following log are extracted lines, final dependencies are at the end of this file." << std::endl;
 
@@ -1229,7 +1265,7 @@ void Manager::parse_circuit(std::ofstream& log) {
         for (std::smatch sm; regex_search(logl, sm, regWires);) {
             // Remove prefix \ and replace dots by space
             std::string filtered = sm.str().erase(0, 1);
-            filtered = std::regex_replace(filtered, regDots, " ");
+            std::replace( filtered.begin(), filtered.end(), '.', ' ');
 
             wires.insert(filtered);
             logl = sm.suffix();
@@ -1252,6 +1288,10 @@ void Manager::parse_circuit(std::ofstream& log) {
                 muxBInputs[line[1]] = wires;
             }
         }
+
+        // Exception for memories, do not declare inputs as inputs of the outputs
+        if (line[2] == "$mem_v2" and line[4] == "in")
+            continue;
 
         // Then build the data structures
         if (line[4] == "in") {
