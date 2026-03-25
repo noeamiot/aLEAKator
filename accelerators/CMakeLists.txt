@@ -16,7 +16,7 @@ function(generate_accelerator name)
         ${ALEAKATOR_PATH}
         ${CMAKE_CURRENT_BINARY_DIR}
     )
-    target_link_libraries(${name} PUBLIC ${Boost_LIBRARIES} lss aleakator verif_msi_pp)
+    target_link_libraries(${name} PUBLIC lss aleakator verif_msi_pp ${Boost_LIBRARIES})
 endfunction()
 
 # Build all accelerators projects

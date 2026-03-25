@@ -5,6 +5,7 @@ if(NOT DEFINED CLANG_PATH)
 endif()
 set(CMAKE_LINKER ${CLANG_PATH}bin/ld.lld)
 set(CMAKE_ASM_LINK_EXECUTABLE ${CLANG_PATH}bin/ld.lld)
+set(CMAKE_EXE_LINKER_FLAGS "-static")
 set(CMAKE_C_COMPILER ${CLANG_PATH}bin/clang)
 set(CMAKE_CXX_COMPILER ${CLANG_PATH}bin/clang++)
 
@@ -59,7 +60,7 @@ add_definitions(${CLANG_DEFINITIONS})
 
 # Be careful, these options are defined for ALL compiled elements, from lib to C programs of CPUs
 # The warnings excluded from -Werror are due to false positives in clang, see https://github.com/llvm/llvm-project/issues/61025
-add_compile_options(-Werror -Wall -Wextra -Wpedantic -Wno-error=unused-parameter -Wno-error=shift-count-overflow -Wno-error=array-bounds)
+add_compile_options(-Werror -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-error=shift-count-overflow -Wno-error=array-bounds)
 add_definitions(-DMUST_BIT_DECOMPOSE)
 
 if(NOT DEFINED YOSYS_CMD)
@@ -70,6 +71,7 @@ set(GHDL_MODULE "ghdl")
 set(YOSYS_COMMON_STEPS "flatten; proc; pmuxtree; opt_expr; opt_clean;;;  check; opt -nodffe -nosdff; fsm; opt; peepopt; opt_clean; share; opt; memory -nomap; opt_clean; opt -fast -full; memory_map; opt -full; opt_clean; dffunmap; rename -enumerate;")
 set(CXXRTL_OPTS "-O6 -g4 -header -print-symbolic")
 
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.83 CONFIG REQUIRED COMPONENTS program_options)
 #set(CMAKE_C_COMPILER_TARGET $TARGET)
 

@@ -41,7 +41,7 @@ function(gen_program cpu program)
         programs/startup.o
         programs/${program}.o
     )
-    target_link_options(${target} PRIVATE -v -fuse-ld=lld ${target_opts} -T ${CMAKE_CURRENT_SOURCE_DIR}/programs/link.ld)
+    target_link_options(${target} PRIVATE -fuse-ld=lld ${target_opts} -T ${CMAKE_CURRENT_SOURCE_DIR}/programs/link.ld)
     target_compile_options(${target} PRIVATE ${target_opts})
     set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
 
@@ -140,7 +140,7 @@ function(gen_cpu cpu generated_programs)
                 ${CMAKE_CURRENT_SOURCE_DIR}/../
             )
             add_dependencies(${cpu}${cfg} ${cpu}_all_programs)
-            target_link_libraries(${cpu}${cfg} PUBLIC ${Boost_LIBRARIES} lss aleakator verif_msi_pp)
+            target_link_libraries(${cpu}${cfg} PUBLIC lss aleakator verif_msi_pp ${Boost_LIBRARIES})
     endforeach()
 endfunction()
 

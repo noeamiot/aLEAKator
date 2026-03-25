@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     top.p_clk.set<bool, true>(true);
 
     manager.step(top);
+
     manager.step(top);
 
     std::cout << *top.p_c0.getNode() << std::endl;

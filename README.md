@@ -34,36 +34,35 @@ locally all needed parts (documentation on this is still WIP).
 
 While in the root of the repository, run:
 ```
-docker buildx build --network=host -o type=image --tag aleakator .
+docker buildx build --network=host -o type=local,dest=build --tag aleakator .
 ```
+If you had to use `sudo` for the previous command due to not being in the `docker` group,
+you will have to use `sudo chown -R ${USER}:${USER} build` to use the built binaries.
 
-Without buildx, the deprecated docker way of building is:
-```
-sudo docker build -t aleakator .
-```
 It should take some time to pull dependencies, build them and then build aleakator. On a medium
 end laptop, expect around 20 minutes. Please note that building is heavy in RAM, consider adding
 swap space.
 
-Once the build is done, verifications can be started like so:
+# How to use aLEAKator
+
+Once the build is done, aleakator is available as a set of statically compiled binaries,
+available in the `build` folder:
 ```
-docker run --network=host --interactive --rm --entrypoint /bin/bash aleakator:latest
-./CPUs/ibex/ibex dom_and --twg
-./CPUs/ibex/ibex dom_and_unsecure --twg --show-expr --detailed
+./build/CPUs/ibex/ibex dom_and --twg
+./build/CPUs/ibex/ibex dom_and_unsecure --twg --show-expr --detailed
 ```
-It will verify the dom_and and dom_and_unsecure programs in ibex and show results in the terminal
-you may save this output somewhere. Also, in the container the folder `./CPUs/ibex/leak_data/...`
-will be populated with folders for each verification. You may add
-`-v /tmp/aleakator:/src/aleakator/build/CPUs/ibex/leak_data/` to the command starting docker to
-retrieve these files easilly in you host filesystem. The output formating is not straightforward
-for now, but will be improved soon.
+It will verify the `dom_and` and `dom_and_unsecure` programs on the `ibex` CPU and show results in
+the terminal you may save this output somewhere.
+Each time an aLEAKator binary is run, a folder is created under the `leak_data` folder next to the
+binary. This folder contains a few files, most notably `leaks.txt` that gives the whole details
+about the leakages encountered during verification.
 
 # Stability
 
 Stability is always computed but can optionally not be considered. For this, the flag
 `USE_STABILITY` in combination with a leak library that disables the partialStabilize and
 regStabilize functions allows for verification with glitches but without stability. This mode is
-less tested but should be complete for the leakage model (meaning the over-approximations and 
+less tested but should be complete for the leakage model (meaning the over-approximations and
 optimisations performed by the manager is still complete).
 
 # How to Build
@@ -99,5 +98,5 @@ The default value is `ON`.
 
 # To Debug Concretisations
 
-Compile using `DEBUG_CONCRETIZATION` then execute as follows: 
+Compile using `DEBUG_CONCRETIZATION` then execute as follows:
 `gdb -iex 'set debuginfod enabled off' --command=../../../gdb_commands --args ./run_cortex_m3 aes_herbst`

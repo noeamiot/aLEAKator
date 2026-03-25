@@ -238,7 +238,6 @@ void Manager::build_database() {
     // Advance databases cycles
     // Note that the structure of database is fixed, the memory one is the only one cleared
     database_[1] = database_[0];
-    //database_memory_[1] = database_memory_[0];
     // TODO: Check if we are correct here
     database_memory_[0].clear();
     database_memory_[1].clear();
@@ -545,6 +544,7 @@ bool Manager::verify_higher_order() {
 
     // Build the database for the current cycle
     this->build_database();
+    // TODO: The database does not handle memories for higher order for now, it must be adressed before implementing HO for CPUs
     // Store the new cycle in database (database[0] can still be refered to as the last computed cycle)
     this->database_ho_.push_back(this->database_[0]);
 

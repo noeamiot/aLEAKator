@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu AS aleakator_builder
 
 RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libffi-dev libfl-dev libreadline-dev pkg-config tcl-dev zlib1g-dev curl cmake libboost-program-options1.83-dev gnat && apt clean
 
@@ -29,9 +29,12 @@ RUN git clone https://github.com/noeamiot/verif_msi_pp-prerelease /src/verif_msi
 
 # Compile aleakator (copy local version instead of cloning it)
 ADD . /src/aleakator
-#RUN git clone --recurse-submodules https://github.com/noeamiot/aLEAKator /src/aleakator
-RUN rm -rf /src/aleakator/build && mkdir -p /src/aleakator/build
-WORKDIR /src/aleakator/build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DCLANG_PATH=/src/clang/ -DVERIFMSI_PATH=/src/verif_msi_pp/ .. && make -j2
+# Exploit build cache, very much appreciated to developpement build
+RUN --mount=type=cache,target=/src/aleakator/build cd /src/aleakator/build && cmake -DCMAKE_BUILD_TYPE=Release -DCLANG_PATH=/src/clang/ -DVERIFMSI_PATH=/src/verif_msi_pp/ .. && make -j6 && cp -ra . /src/res_aleakator/
+WORKDIR /src/res_aleakator/
+
+# Second stage: minimal runtime image
+FROM scratch
+COPY --from=aleakator_builder /src/res_aleakator/ /
 
 ENTRYPOINT ["echo", "Usage: start this container interactively with bash as entrypoint"]
