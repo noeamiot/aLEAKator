@@ -24,8 +24,11 @@ RUN git checkout 07a30ed39fb6a078f1bf7e9e88ce9ed712380ec2
 RUN make GHDL=/src/ghdl/bin/ghdl && make install
 ENV GHDL_PREFIX=/src/ghdl/lib/ghdl/
 
-# Install prebuilt verifmsi
-RUN git clone https://github.com/noeamiot/verif_msi_pp-prerelease /src/verif_msi_pp
+# Install verifmsi
+RUN git clone https://github.com/quentin-meunier/verif_msi_pp /src/verif_msi_pp
+WORKDIR /src/verif_msi_pp
+RUN git checkout 0122ddb07d4c94b413ade96cf5d43795aaf38b45
+RUN make -j
 
 # Compile aleakator (copy local version instead of cloning it)
 ADD . /src/aleakator

@@ -5,8 +5,7 @@ hardware as well as masked hardware implementations. It establishes the needed v
 eventual optimisations for a given security property provided by the user.
 
 Verification and symbolic expression generation are performed using [VerifMSI](https://github.com/quentin-meunier/verifmsi).
-The C++ implementation is used and should be released to the public soon. For now, a precompiled version
-is available [on github](https://github.com/noeamiot/verif_msi_pp-prerelease).
+The C++ implementation used in aLEAKator is available [on github](https://github.com/noeamiot/verif_msi_pp).
 
 To use this repository, you MUST clone the project with the submodules:
 `git clone git@github.com:noeamiot/aleakator --recurse-submodules`
