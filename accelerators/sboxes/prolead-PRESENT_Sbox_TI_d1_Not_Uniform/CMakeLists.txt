@@ -10,4 +10,6 @@ add_custom_command(
     DEPENDS ${HDL_SRC}
     VERBATIM
 )
-generate_accelerator(${target})
+if(GHDL_ENABLE)
+    generate_accelerator(${target})
+endif()

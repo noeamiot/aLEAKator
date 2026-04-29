@@ -14,4 +14,6 @@ add_custom_command(
     BYPRODUCTS ./rtl/
     VERBATIM
 )
-generate_accelerator(${target})
+if(GHDL_ENABLE)
+    generate_accelerator(${target})
+endif()

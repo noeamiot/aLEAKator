@@ -81,6 +81,9 @@ make -j cortex_m4
 You can also build in Debug mode, for the debug symbols to be enabled. Please note that the Release
 build type disables assertions, thus throughout testing is needed before running in this mode.
 
+If you don't need `GHDL` support and don't want to use the few ghdl targets, you can add to the
+cmake configuration `-DGHDL_ENABLE=OFF`, default is enabled.
+
 ## Specific Build Options
 
 When leaksets are not to be considered, one can disable the functions from the `leaks` namespace.
