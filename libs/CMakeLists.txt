@@ -6,10 +6,9 @@ target_sources(lss
     PRIVATE
     ${LSS_SOURCES}
     PUBLIC
-    ${VERIF_MSI_HEADERS}
     ${LSS_HEADERS}
 )
-target_include_directories(lss PUBLIC ${LSS_PATH} ${VERIFMSI_PATH})
+target_include_directories(lss PUBLIC ${LSS_PATH} ${VERIFMSI_HEADERS})
 
 if (NOT ENABLE_LEAKSETS)
     message(STATUS "DISABLING LEAKSETS")
@@ -26,7 +25,6 @@ target_sources(aleakator
     PRIVATE
     ${ALEAKATOR_SOURCES}
     PUBLIC
-    ${VERIF_MSI_HEADERS}
     ${CXXRTL_HEADERS}
     ${LSS_HEADERS}
     ${ALEAKATOR_HEADERS}
@@ -35,7 +33,7 @@ target_include_directories(aleakator
     PUBLIC
     ${Boost_INCLUDE_DIRS}
     ${CXXRTL_PATH}
-    ${VERIFMSI_PATH}
+    ${VERIFMSI_HEADERS}
     ${LSS_PATH}
     ${ALEAKATOR_PATH}
 )

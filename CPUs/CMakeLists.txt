@@ -131,7 +131,7 @@ function(gen_cpu cpu generated_programs)
             target_include_directories(${cpu}${cfg}
                 PUBLIC
                 ${CXXRTL_PATH}
-                ${VERIFMSI_PATH}
+                ${VERIFMSI_HEADERS}
                 ${LSS_PATH}
                 ${ALEAKATOR_PATH}
                 ${CMAKE_CURRENT_BINARY_DIR}

@@ -1,6 +1,8 @@
-FROM ubuntu AS aleakator_builder
+FROM ubuntu:resolute AS aleakator_builder
 
-RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libffi-dev libfl-dev libreadline-dev pkg-config tcl-dev zlib1g-dev curl cmake libboost-program-options1.83-dev gnat && apt clean
+RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libffi-dev libfl-dev libreadline-dev pkg-config tcl-dev zlib1g-dev curl cmake libboost-program-options1.83-dev gnat libxml2-16 && apt clean
+# libxml changed for precompiled lld
+RUN ln -s /lib/x86_64-linux-gnu/libxml2.so.16 /lib/x86_64-linux-gnu/libxml2.so.2
 
 RUN git clone --recurse-submodules https://github.com/noeamiot/yosys /src/yosys-aleakator
 
@@ -27,8 +29,8 @@ ENV GHDL_PREFIX=/src/ghdl/lib/ghdl/
 # Install verifmsi
 RUN git clone https://github.com/quentin-meunier/verif_msi_pp /src/verif_msi_pp
 WORKDIR /src/verif_msi_pp
-RUN git checkout 0122ddb07d4c94b413ade96cf5d43795aaf38b45
-RUN make -j
+RUN git checkout af5cd1af06347c0f8104e9f9b6a29a5b494d70c7
+RUN BUILD_PYTHON=0 make -j
 
 # Compile aleakator (copy local version instead of cloning it)
 ADD . /src/aleakator

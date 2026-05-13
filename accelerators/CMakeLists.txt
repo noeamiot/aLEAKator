@@ -11,7 +11,7 @@ function(generate_accelerator name)
     target_include_directories(${name}
         PUBLIC
         ${CXXRTL_PATH}
-        ${VERIFMSI_PATH}
+        ${VERIFMSI_HEADERS}
         ${LSS_PATH}
         ${ALEAKATOR_PATH}
         ${CMAKE_CURRENT_BINARY_DIR}

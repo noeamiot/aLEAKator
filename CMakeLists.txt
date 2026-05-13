@@ -27,7 +27,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT DEFINED VERIFMSI_PATH)
     set(VERIFMSI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/verif_msi_pp/")
 endif()
-file(GLOB VERIF_MSI_HEADERS ${VERIFMSI_PATH}/*.hpp)
+set(VERIFMSI_HEADERS ${VERIFMSI_PATH}/include/)
 
 set(CXXRTL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/")
 set(CXXRTL_HEADER ${CXXRTL_PATH}/cxxrtl/cxxrtl.h ${CXXRTL_PATH}/cxxrtl/capi/cxxrtl_capi.h)
