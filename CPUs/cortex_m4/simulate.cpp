@@ -84,9 +84,10 @@ int main(int argc, char *argv[]) {
 
         if (top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__regbank_2e_u__cm4__dpu__regfile_2e_reg13.curr.node->nature != CONST
             || top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_u__cm4__dpu__regbank_2e_rf__pc__ex.node->nature != CONST
-// TODO: Put it back maybe ?            //|| top.p_uCORTEXm4INTEGRATION_2e_uCORTEXm4_2e_u__cm4__dpu_2e_instr__de.curr.node->nature != CONST
+            || top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_0_40_.curr.node->nature != CONST
+            || top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__advance__ex.curr.node->nature != CONST
         ) {
-            std::cout << "PC, SP or fetch instruction is symbolized" << std::endl;
+            std::cout << "PC, SP or de/ex instruction is symbolized" << std::endl;
             raise(SIGTRAP);
         }
 
@@ -94,7 +95,7 @@ int main(int argc, char *argv[]) {
         std::cout << "--------------------------" << std::endl;
         std::cout << "Following values are the output values of ff's at cycle: " << manager.get_steps() << std::endl;
         uint32_t decode_instr_reg = 0 | 
-            top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_1_40_.curr.get<uint32_t>() << 1 |
+            top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_0_40_.curr.get<uint32_t>() << 0 |
             top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_1_40_.curr.get<uint32_t>() << 1 |
             top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_2_40_.curr.get<uint32_t>() << 2 |
             top.p_uCORTEXM4INTEGRATION_2e_uCORTEXM4_2e_u__cm4__dpu_2e_instr__de_40_3_40_.curr.get<uint32_t>() << 3 |

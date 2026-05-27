@@ -1090,7 +1090,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		if (is_fully_stable() && other.is_fully_stable())
 			std::copy(stability, stability + value<Bits>::chunks, result.stability);
 
-		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls), result.node, result.stability);
+		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, Bits), result.node, result.stability);
 
 		result.debug_assert();
 		return result;
@@ -1104,7 +1104,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		if (is_fully_stable() && other.is_fully_stable())
 			std::copy(stability, stability + value<Bits>::chunks, result.stability);
 
-		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls), result.node, result.stability);
+		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, Bits), result.node, result.stability);
 
 		result.debug_assert();
 		return result;
@@ -1119,7 +1119,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		if (is_fully_stable())
 			std::copy(stability, stability + value<Bits>::chunks, result.stability);
 
-		result.ls = leaks::partial_stabilize(leaks::mix(ls, nullptr), result.node, result.stability);
+		result.ls = leaks::partial_stabilize(leaks::mix(ls, nullptr, Bits), result.node, result.stability);
 
 		result.debug_assert();
 		return result;
@@ -1174,11 +1174,13 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		// Replicate full stability on output only if both inputs are fully stable
 		if (is_fully_stable() && other.is_fully_stable()) {
-			std::copy(stability, stability + value<Bits>::chunks, result.stability);
+			for (size_t n = 0; n < result.chunks; n++) {
+				result.stability[n] = chunk::mask;
+			}
 			result.stability[result.chunks - 1] &= result.msb_mask;
 		}
 
-		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls), result.node, result.stability);
+		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, ResultBits), result.node, result.stability);
 
 		result.debug_assert();
 		return result;

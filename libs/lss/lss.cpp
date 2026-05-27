@@ -50,13 +50,12 @@ LeakSet* merge(const std::vector<LeakSet*>& lss) {
 }
 
 // Allocates new leaksSet containing all bits of all leaksets in entry if they exist
-LeakSet* mix(LeakSet* first, LeakSet* second) {
+LeakSet* mix(LeakSet* first, LeakSet* second, size_t size) {
     REMOVE_DISABLED
     if (first == nullptr and second == nullptr) return nullptr;
     if (first != nullptr and second != nullptr)
         assert(first->leaks.size() == second->leaks.size());
 
-    int size = (first != nullptr) ? first->leaks.size() : second->leaks.size();
     std::set<Node*> all_leaks;
     if (first != nullptr)
         for (size_t i = 0; i < first->leaks.size(); ++i)

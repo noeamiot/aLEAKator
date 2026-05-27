@@ -43,7 +43,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
         mixed_cmp.insert(&simplify(Extract(i, i, *a)));
         mixed_cmp.insert(&simplify(Extract(i, i, *b)));
     }
-    leaks::LeakSet* mixed = leaks::mix(ls_a, ls_b);
+    leaks::LeakSet* mixed = leaks::mix(ls_a, ls_b, a->width);
     assert(mixed != ls_a && merged != ls_b);
     for (int i = 0; i < a->width; i++) {
         assert(mixed->leaks[i].size() == static_cast<size_t>(a->width + b->width));
@@ -52,7 +52,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
     for (int i = 0; i < a->width; i++) {
         mixed_cmp.insert(&simplify(Extract(i, i, *c)));
     }
-    mixed = leaks::mix(mixed, ls_c);
+    mixed = leaks::mix(mixed, ls_c, c->width);
     assert(mixed != ls_c);
     for (int i = 0; i < a->width; i++) {
         assert(mixed->leaks[i].size() == static_cast<size_t>(a->width + b->width + c->width));

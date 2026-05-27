@@ -65,7 +65,7 @@ struct LeakSet {
 
 LeakSet* merge(LeakSet* first, LeakSet* second);
 LeakSet* merge(const std::vector<LeakSet*>& lss);
-LeakSet* mix(LeakSet* first, LeakSet* second);
+LeakSet* mix(LeakSet* first, LeakSet* second, size_t size);
 LeakSet* extract(LeakSet* ls, size_t begin, size_t end);
 LeakSet* sextend(LeakSet* ls, size_t new_size);
 LeakSet* extend(LeakSet* ls, size_t new_size);
