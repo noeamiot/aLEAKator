@@ -108,10 +108,13 @@ Configuration::Configuration(int argc, char *argv[], CircuitType circuit_type, c
 void Configuration::init_working_path(const std::string& arg0) {
     fs::path binary_path = fs::weakly_canonical(fs::path(arg0)).parent_path();
     // Get current localed and formatted time
-    const std::string time = std::format("{:%Y_%m_%d__%H_%M_%S}", std::chrono::floor<std::chrono::seconds>(
-        std::chrono::current_zone()->to_local(std::chrono::system_clock::now())
-    ));
-    working_path_ = binary_path/"leak_data"/(program_ + "_" + subprogram_ + "_" + time);
+    const auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::tm local_tm{};
+    localtime_r(&now, &local_tm);
+
+    std::ostringstream oss;
+    oss << std::put_time(&local_tm, "%Y_%m_%d__%H_%M_%S");
+    working_path_ = binary_path/"leak_data"/(program_ + "_" + subprogram_ + "_" + oss.str());
 
     // If folder already exist (the program was already started the same second), recreate it
     if(fs::exists(working_path_)) {
