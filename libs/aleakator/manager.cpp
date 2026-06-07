@@ -925,7 +925,7 @@ void Manager::detail_leaks_vwog(const std::set<std::string>& wires) {
         leakage_file_ << "Wire: " << wire << " is leaking in Value without glitches at measure cycle: " << measure_cycle() << std::endl;
         detail_wire_info(wire);
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            leakage_file_ << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its current expression is: " << (database_[0].contains(wire) ? database_ : database_memory_)[0].at(wire).expr_->verbatimPrint() << std::endl;
         }
         leakage_file_ << "----------------------------" << std::endl;
     }
@@ -936,8 +936,8 @@ void Manager::detail_leaks_twog(const std::set<std::string>& wires) {
         leakage_file_ << "Wire: " << wire << " is leaking in Transition without glitches at measure cycle: " << measure_cycle() << std::endl;
         detail_wire_info(wire);
         if (config_.DETAIL_SHOW_EXPRESSION_) {
-            leakage_file_ << "Its current expression is: " << database_[0][wire].expr_->verbatimPrint() << std::endl;
-            leakage_file_ << "Its previous expression is: " << database_[1][wire].expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its current expression is: " << (database_[0].contains(wire) ? database_ : database_memory_)[0].at(wire).expr_->verbatimPrint() << std::endl;
+            leakage_file_ << "Its previous expression is: " << (database_[1].contains(wire) ? database_ : database_memory_)[1].at(wire).expr_->verbatimPrint() << std::endl;
         }
         leakage_file_ << "----------------------------" << std::endl;
     }
@@ -949,7 +949,7 @@ void Manager::detail_leaks_vwg(const std::set<std::string>& wires) {
         leakage_file_ << "Wire: " << wire << " is leaking in Value with glitches at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
             leakage_file_ << "Its current leakset is: ";
-            leaks::print_leakage(database_[0][wire].leakset_, leakage_file_);
+            leaks::print_leakage((database_[0].contains(wire) ? database_ : database_memory_)[0].at(wire).leakset_, leakage_file_);
             leakage_file_ << std::endl;
         }
         leakage_file_ << "----------------------------" << std::endl;
@@ -962,10 +962,10 @@ void Manager::detail_leaks_twg(const std::set<std::string>& wires) {
         leakage_file_ << "Wire: " << wire << " is leaking in Transition with at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
             leakage_file_ << "Its current leakset is: ";
-            leaks::print_leakage(database_[0][wire].leakset_, leakage_file_);
+            leaks::print_leakage((database_[0].contains(wire) ? database_ : database_memory_)[0].at(wire).leakset_, leakage_file_);
             leakage_file_ << std::endl;
             leakage_file_ << "Its previous leakset is: ";
-            leaks::print_leakage(database_[1][wire].leakset_, leakage_file_);
+            leaks::print_leakage((database_[1].contains(wire) ? database_ : database_memory_)[1].at(wire).leakset_, leakage_file_);
             leakage_file_ << std::endl;
         }
         leakage_file_ << "----------------------------" << std::endl;
@@ -978,8 +978,8 @@ void Manager::detail_leaks_all(const std::set<std::string>& wires) {
         leakage_file_ << "Wire: " << wire << " at measure cycle: " << measure_cycle() << std::endl;
         if (config_.DETAIL_SHOW_EXPRESSION_) {
             // TODO: This does not handle splitted wires
-            Entry& current = (database_[0].contains(wire)) ? database_[0][wire] : database_memory_[0][wire];
-            Entry& previous = (database_[1].contains(wire)) ? database_[1][wire] : database_memory_[1][wire];
+            Entry& current = (database_[0].contains(wire) ? database_ : database_memory_)[0].at(wire);
+            Entry& previous = (database_[1].contains(wire) ? database_ : database_memory_)[1].at(wire);
             leakage_file_ << "Its current expression is: " << current.expr_->verbatimPrint() << std::endl;
             if (config_.VERIF_VALUE_W_GLITCHES_ or config_.VERIF_TRANSITION_W_GLITCHES_) {
                 leakage_file_ << "Its current leakset is: ";

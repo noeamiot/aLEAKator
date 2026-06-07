@@ -34,7 +34,7 @@ function(gen_mem program target)
 endfunction()
 
 # Generic configuration
-set(target_opts --target=riscv32 -march=rv32ic -mabi=ilp32 -nostdlib -ffreestanding -O3)
+set(target_opts --target=riscv32 -march=rv32imc -mabi=ilp32 -nostdlib -ffreestanding -O3)
 message(STATUS "Target flags set to: ${target_opts}")
 gen_bootloader(${cpu})
 # Generated programs is filled by gen_all_programs
