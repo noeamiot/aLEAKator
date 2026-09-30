@@ -1,23 +1,25 @@
---- ../../../build/examples/CPUs/ibex/cxxrtl_ibex.cpp	2025-08-11 16:20:35.776892662 +0200
-+++ cxxrtl_ibex.cpp.bk	2025-08-11 16:24:51.086075992 +0200
-@@ -2404,10 +2404,20 @@
-	// cell \_3916_
-	p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_instr__executing = and_uu<1>(p___1531__, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed);
-	// \src: ./ibex_gen_verilog/ibex_id_stage.v:586.38-586.68
-	// cell \_3900_
-	p___1525__ = and_uu<1>(p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_data__req__allowed, p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_decoder__i_2e_data__req__o);
-+    if (p___1525__.data[0] && simplify(Extract(33, 11, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node)).nature != CONST) {
-+        std::cout << "Concretizing MSB for lsu" << std::endl;
-+
-+        p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.setNode(&Concat(
-+            constant(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.get<uint64_t>() >> 11, 23), // Keep 10 symbolic bits
-+            Extract(10, 3, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node),
-+            constant(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.get<uint64_t>() & 0x7, 3) // Last 3 bits
-+        ));
-+        p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.debug_assert();
-+    }
-	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.115-283.135
-	// cell \_4173_
-	p___433__.slice<2>() = eq_uu<1>(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.slice<2,1>().val(), value<2>{0x3u});
-	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.90-283.109
-	// cell \_4172_
+*** CPUs/ibex/cxxrtl_ibex.cpp.orig	2026-09-29 09:01:54.302998267 +0200
+--- CPUs/ibex/cxxrtl_ibex.cpp	2026-09-29 09:36:54.484990256 +0200
+***************
+*** 2474,2483 ****
+--- 2474,2493 ----
+  	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:104.20-104.20|./ibex_gen_verilog/ibex_load_store_unit.v:104.3-146.10
+  	// cell \_3229_
+  	p___395__ = logic_not<1>(p_u__top_2e_u__ibex__core_2e_id__stage__i_2e_decoder__i_2e_data__type__o);
+  	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:283.62-283.82
+  	// cell \_2485_
++     if (p___899__.data[0] && simplify(Extract(33, 11, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node)).nature != CONST) {
++         std::cout << "Concretizing MSB for lsu" << std::endl;
++ 
++         p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.setNode(&Concat(
++             constant(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.get<uint64_t>() >> 11, 23), // Keep 10 symbolic bits
++             Extract(10, 3, *p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.node),
++             constant(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.get<uint64_t>() & 0x7, 3) // Last 3 bits
++         ));
++         p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.debug_assert();
++     }
+  	p___394__ = reduce_bool<1>(p_u__top_2e_u__ibex__core_2e_ex__block__i_2e_alu__adder__result__ext.slice<2,1>().val());
+  	// \parallel_case: 1
+  	// \full_case: 1
+  	// \src: ./ibex_gen_verilog/ibex_load_store_unit.v:155.64-155.64|./ibex_gen_verilog/ibex_load_store_unit.v:152.3-158.10
+  	// cell \_3238_

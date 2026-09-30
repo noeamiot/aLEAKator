@@ -4,14 +4,14 @@ RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libf
 # libxml changed for precompiled lld
 RUN ln -s /lib/x86_64-linux-gnu/libxml2.so.16 /lib/x86_64-linux-gnu/libxml2.so.2
 
-RUN git clone --recurse-submodules https://github.com/noeamiot/yosys /src/yosys-aleakator
+RUN git clone --recurse-submodules --depth 1 https://github.com/noeamiot/yosys /src/yosys-aleakator -b v0.69
 
 RUN curl -L --output /src/clang.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
 RUN mkdir -p /src/clang/ && tar xvf /src/clang.tar.xz --strip-components=1 -C /src/clang && rm /src/clang.tar.xz
 
 # Install custom yosys
 WORKDIR /src/yosys-aleakator
-RUN make config-clang && make CC=/src/clang/bin/clang CXX=/src/clang/bin/clang++ -j6 && make install
+RUN cmake -B build . -DCMAKE_BUILD_TYPE=Release && cmake --build build --parallel 6 && cmake --install build --strip
 RUN curl -L --output /src/sv2v.zip https://github.com/zachjs/sv2v/releases/download/v0.0.13/sv2v-Linux.zip && unzip /src/sv2v.zip -d /src/sv2v/ && cp /src/sv2v/sv2v-Linux/sv2v /bin/ && rm -r /src/sv2v /src/sv2v.zip
 
 # Install ghdl from releases
@@ -29,8 +29,8 @@ ENV GHDL_PREFIX=/src/ghdl/lib/ghdl/
 # Install verifmsi
 RUN git clone https://github.com/quentin-meunier/verif_msi_pp /src/verif_msi_pp
 WORKDIR /src/verif_msi_pp
-RUN git checkout af5cd1af06347c0f8104e9f9b6a29a5b494d70c7
-RUN BUILD_PYTHON=0 make -j
+RUN git checkout 25f233112b8273ce58fc1a82faec806d20fbdb3f
+RUN BUILD_PYTHON=0 CXX=clang++ make -j
 
 # Compile aleakator (copy local version instead of cloning it)
 ADD . /src/aleakator

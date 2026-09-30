@@ -63,14 +63,42 @@ add_definitions(${CLANG_DEFINITIONS})
 add_compile_options(-Werror -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-error=shift-count-overflow -Wno-error=array-bounds)
 add_definitions(-DMUST_BIT_DECOMPOSE)
 
+# Check that default or found yosys is ok for use in aleakator
 if(NOT DEFINED YOSYS_CMD)
-    set(YOSYS_CMD "yosys")
+    find_program(YOSYS_CMD yosys REQUIRED)
 endif()
+execute_process(
+    COMMAND ${YOSYS_CMD} -p "write_cxxrtl -print-symbolic"
+    COMMAND_ERROR_IS_FATAL ANY
+    OUTPUT_QUIET
+    RESULT_VARIABLE YOSYS_CXXRTL_SYMB_SUPPORT
+)
+if(NOT YOSYS_CXXRTL_SYMB_SUPPORT STREQUAL "0")
+    message(FATAL_ERROR "Wrong yosys version, does not support 'write_cxxrtl -print-symbolic': ${YOSYS_CXXRTL_SYMB_SUPPORT}")
+endif()
+message(STATUS "Yosys with CXXRTL Symbolic support: Found ${YOSYS_CMD}")
+
+find_program(SV2V_CMD sv2v REQUIRED)
+message(STATUS "Sv2v: Found ${SV2V_CMD}")
+
 if(NOT DEFINED GHDL_ENABLE)
     set(GHDL_ENABLE ON)
 endif()
+
+if (GHDL_ENABLE)
+    set(GHDL_MODULE "ghdl")
+    execute_process(
+        COMMAND ${YOSYS_CMD} -m ${GHDL_MODULE} -p "check"
+        OUTPUT_QUIET
+        RESULT_VARIABLE YOSYS_GHDL_SUPPORT
+    )
+    if(NOT YOSYS_GHDL_SUPPORT STREQUAL "0")
+        message(FATAL_ERROR "GHDL support was requested but yosys fails to load the module: ${YOSYS_GHDL_SUPPORT}")
+    endif()
+    message(STATUS "Yosys supports GHDL module loading: OK")
+endif()
+
 set(YOSYS_OPTS "-g")
-set(GHDL_MODULE "ghdl")
 set(YOSYS_COMMON_STEPS "flatten; proc; pmuxtree; opt_expr; opt_clean;;;  check; opt -nodffe -nosdff; fsm; opt; peepopt; opt_clean; share; opt; memory -nomap; opt_clean; opt -fast -full; memory_map; opt -full; opt_clean; dffunmap; rename -enumerate;")
 set(CXXRTL_OPTS "-O6 -g4 -header -print-symbolic")
 

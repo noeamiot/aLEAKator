@@ -46,6 +46,12 @@ function(gen_mem program target)
         DEPENDS ${target} cxxrtl_${cpu}.h
         BYPRODUCTS programs/${program}.bin programs/${program}.data
     )
+
+    set_source_files_properties(
+        programs/${program}_program.cpp
+        PROPERTIES
+        COMPILE_OPTIONS "-O0"
+    )
 endfunction()
 
 # Generic configuration

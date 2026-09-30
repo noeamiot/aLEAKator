@@ -63,7 +63,7 @@ opt -fast -full;
 opt -full;
 
 
-select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_32bit_dec.reg_addr_sel_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.instr_lsu_ctl_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_de
+select -module example_tbench uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_alu.u_cm4_dpu_alu_dp.mrs_ctrl_res_ex uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.u_cm4_dpu_32bit_dec.reg_addr_sel_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.instr_lsu_ctl_de uCORTEXM4INTEGRATION.uCORTEXM4.u_cm4_dpu.u_cm4_dpu_dec.instr_32_de
 splitnets -format @@;
 select -clear;
 

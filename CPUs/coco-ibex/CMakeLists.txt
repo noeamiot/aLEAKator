@@ -8,10 +8,9 @@ add_custom_command(
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/prepare.sh ${CMAKE_CURRENT_SOURCE_DIR}/rtl/
     COMMAND ${YOSYS_CMD} ${YOSYS_OPTS} -s ${CMAKE_CURRENT_SOURCE_DIR}/synth.ys
     COMMAND sed -ri "s/(.*p_u__core_2e_data__addr__o.symb_keep\\().*/\\1true\\);/g" cxxrtl_${cpu}.h
-	COMMAND sed -ri "s/(.*p_u__core_2e_data__req__o.symb_keep\\().*/\\1true\\);/g" cxxrtl_${cpu}.h
-	COMMAND sed -ri "s/(.*p_u__core_2e_data__we__o.symb_keep\\().*/\\1true\\);/g" cxxrtl_${cpu}.h
-    #COMMAND patch cxxrtl_${cpu}.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patch_ibex.patch
-    DEPENDS ${dependencies} prepare.sh synth.ys# patch_ibex.patch
+    COMMAND sed -ri "s/(.*p_u__core_2e_data__req__o.symb_keep\\().*/\\1true\\);/g" cxxrtl_${cpu}.h
+    COMMAND sed -ri "s/(.*p_u__core_2e_data__we__o.symb_keep\\().*/\\1true\\);/g" cxxrtl_${cpu}.h
+    DEPENDS ${dependencies} prepare.sh synth.ys
     BYPRODUCTS ./ibex_gen_verilog/
     VERBATIM
 )
@@ -36,6 +35,12 @@ function(gen_mem program target)
         COMMAND echo "}" >> programs/${program}_program.cpp
         DEPENDS ${target} cxxrtl_${cpu}.h
         BYPRODUCTS programs/${program}.bin programs/${program}.data
+    )
+
+    set_source_files_properties(
+        programs/${program}_program.cpp
+        PROPERTIES
+        COMPILE_OPTIONS "-O0"
     )
 endfunction()
 
