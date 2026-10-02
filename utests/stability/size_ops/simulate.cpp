@@ -4,6 +4,7 @@
 #include "cxxrtl/cxxrtl.h"
 #include "verif_msi_pp.hpp"
 #include "lss.h"
+#include "utests.h"
 
 // Global to cxxrtl, must be defined but will produce no logs here
 std::ofstream simulation_logger;
@@ -38,75 +39,75 @@ int main(int argc, char *argv[]) {
 
     // Stable zero extend (sign does not matter)
     c = a.zext<33>();
-    assert(stability(c) == 0x00000001FFFFFFFFull);
+    trap_check(stability(c) == 0x00000001FFFFFFFFull);
     std::cout << "Zext stable a to 33 bits c: " << stability(c) << std::endl;
 
     // Unstable zero extend (sign does not matter)
     a.stability[0] = 0x0u;
     c = a.zext<33>();
-    assert(stability(c) == 0x00000001FFFFFFFEull);
+    trap_check(stability(c) == 0x00000001FFFFFFFEull);
     std::cout << "Zext unstable a to 33 bits c: " << stability(c) << std::endl;
 
     // Partially stable zero extend
     d.stability[0] = 0x0FF00FE;
     c = d.zext<33>();
-    assert(stability(c) == 0x00000001FEFF00FEull);
+    trap_check(stability(c) == 0x00000001FEFF00FEull);
     std::cout << "Zext d to 33 bits c: " << stability(c) << std::endl;
 
     // Another partially stable zero extend with empty chunks
     d.stability[0] = 0x00F00F0;
     e = d.zext<64>();
-    assert(stability(e) == 0xFFFFFFFFFE0F00F0ull);
+    trap_check(stability(e) == 0xFFFFFFFFFE0F00F0ull);
     std::cout << "Zext d to 64 bits e: " << stability(e) << std::endl;
 
     // Stable right zero extend (sign does not matter)
     a.stability[0] = 0x1u;
     c = a.rzext<33>();
-    assert(stability(c) == 0x00000001FFFFFFFFull);
+    trap_check(stability(c) == 0x00000001FFFFFFFFull);
     std::cout << "rZext stable a to 33 bits c: " << stability(c) << std::endl;
 
     // Unstable right zero extend (sign does not matter)
     a.stability[0] = 0x0u;
     c = a.rzext<33>();
-    assert(stability(c) == 0x00000000FFFFFFFFull);
+    trap_check(stability(c) == 0x00000000FFFFFFFFull);
     std::cout << "rZext unstable a to 33 bits c: " << stability(c) << std::endl;
 
     // Partially stable right zero extend
     d.stability[0] = 0x1FF00FE;
     c = d.rzext<33>();
-    assert(stability(c) == 0x00000001FF00FEFFull);
+    trap_check(stability(c) == 0x00000001FF00FEFFull);
     std::cout << "rZext d to 33 bits c: " << stability(c) << std::endl;
 
     // Another partially stable right zero extend with empty chunks
     d.stability[0] = 0x10F00F0;
     e = d.rzext<64>();
-    assert(stability(e) == 0x8780787FFFFFFFFFull);
+    trap_check(stability(e) == 0x8780787FFFFFFFFFull);
     std::cout << "rZext d to 64 bits e: " << stability(e) << std::endl;
 
     // Stable sign extend (sign does not matter)
     d.stability[0] = 0x1FF00FF;
     c = d.sext<33>();
-    assert(stability(c) == 0x00000001FFFF00FFull);
+    trap_check(stability(c) == 0x00000001FFFF00FFull);
     std::cout << "Sext stable MSB d to 33 bits c: " << stability(c) << std::endl;
 
     // Unstable sign extend (sign does not matter)
     d.stability[0] = 0x0FF00FF;
     c = d.sext<33>();
-    assert(stability(c) == 0x0000000000FF00FFull);
+    trap_check(stability(c) == 0x0000000000FF00FFull);
     std::cout << "Sext unstable a to 33 bits c: " << stability(c)  << std::endl;
 
     // Partially stable trunc
     c.stability[0] = 0xFE00FFFFu; // Only the lower FFFF will remain
     c.stability[1] = 0x1u; // This will be split
     d = c.trunc<25>();
-    assert(stability(d) == 0x000000000000FFFFull);
+    trap_check(stability(d) == 0x000000000000FFFFull);
     std::cout << "Trunc stable on last 16 bits c to 25 bits d: " << stability(d) << std::endl;
 
     // Partially stable rtrunc
     c.stability[0] = 0xFE00FFFFu; // The lower FF will be split
     c.stability[1] = 0x1u;
     d = c.rtrunc<25>();
-    assert(stability(d) == 0x0000000001FE00FFull);
+    trap_check(stability(d) == 0x0000000001FE00FFull);
     std::cout << "rTrunc stable on last 16 bits c to 25 bits d: " << stability(d) << std::endl;
 
     // Blit
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
     e.stability[0] = 0xAA0FF001ull;
     e.stability[1] = 0x0000000Bull;
     f = e.blit<34, 2>(c);
-    assert(stability(f) == 0x0000000BFC46ABFDull);
+    trap_check(stability(f) == 0x0000000BFC46ABFDull);
     std::cout << "Blit c: " << stability(c) << std::endl;
     std::cout << "Blit e: " << stability(e) << std::endl;
     std::cout << "Blit f: " << stability(f) << std::endl;
@@ -123,13 +124,13 @@ int main(int argc, char *argv[]) {
     // Repeat unstable
     a.stability[0] = 0x0u;
     g = a.repeat<64>();
-    assert(stability(g) == 0x0000000000000000ull);
+    trap_check(stability(g) == 0x0000000000000000ull);
     std::cout << "Repeat unstable to 64 bits g: " << stability(g) << std::endl;
 
     // Repeat stable
     a.stability[0] = 0x1u;
     g = a.repeat<64>();
-    assert(stability(g) == 0xFFFFFFFFFFFFFFFFull);
+    trap_check(stability(g) == 0xFFFFFFFFFFFFFFFFull);
     std::cout << "Repeat stable to 64 bits g: " << stability(g) << std::endl;
     verifMSICleanup();
 }

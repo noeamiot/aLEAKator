@@ -93,6 +93,15 @@ extern std::ofstream simulation_logger;
 #endif
 #endif
 
+// As modifications by aLEAKator can cause inconsistencies when bug arise, a method
+// that checks for theses inconsistencies is provided and called as many time as possible
+// for each simulation step for debuging purpose but must have no impact on normal runs
+#ifdef DEBUG_STATE_CONSISTANCE
+#define CONSISTENCY_CHECK(x) (x).debug_assert()
+#else
+#define CONSISTENCY_CHECK(x)
+#endif
+
 namespace cxxrtl {
 
 // All arbitrary-width values in CXXRTL are backed by arrays of unsigned integers called chunks. The chunk size
@@ -169,7 +178,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			stability[n] = chunk::mask;
 		stability[chunks - 1] = msb_mask;
 		assert(Bits == node->width);
-		this->debug_assert();
+		CONSISTENCY_CHECK(*this);
 	}
 
 	value(const value<Bits> &other) = default;
@@ -179,7 +188,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 	value<Bits> &operator=(value<Bits> &&) = default;
 
 	void symb_keep(bool toBeKept) {
-		this->debug_assert();
+		CONSISTENCY_CHECK(*this);
 		if (toBeKept) {
 			leaks::keep(ls);
 		} else {
@@ -279,28 +288,34 @@ struct value : public expr_base<value<Bits>>, leakable {
 	}
 
 	void debug_assert() const {
-		#ifdef DEBUG_STATE_CONSISTANCE
-		if(this->node->nature == CONST) {
+		#ifndef DEBUG_STATE_CONSISTANCE
+		return;
+		#else
+		if (this->node->nature == CONST) {
 			// Find fully const node that are not consistant with conc state
-			assert(this->cmpConc());
+			if (not this->cmpConc())
+				__builtin_trap();
 		} else {
 			// Find partially const node that are not consistant with conc state
 			for (size_t i = 0; i < Bits; ++i) {
 				Node* curr = &simplify(Extract(i, i, *(this->node)));
-				assert(curr->nature != CONST || (((this->data[i/32]) >> (i%32)) & 1) == curr->cst[0]);
+				if (curr->nature == CONST and
+					(((this->data[i/32]) >> (i%32)) & 1) != curr->cst[0])
+					__builtin_trap();
 			}
 		}
 
 		// Find looping node creations
 		//if (this->node->hasSaturated == true)
-		//	raise(SIGTRAP);
+		//	__builtin_trap();
 
 		// Find leaksets that aren't real if any
-		if (this->ls != nullptr and not leaks::is_ls_real(this->ls))
-			raise(SIGTRAP);
+		if (this->ls != nullptr && not leaks::is_ls_real(this->ls))
+			__builtin_trap();
 
 		// Find stability overlapping the number of bits
-		assert((stability[chunks-1] & ~msb_mask) == 0x0u);
+		if ((this->stability[chunks-1] & ~msb_mask) != 0x0u)
+			__builtin_trap();
 		#endif
 	}
 
@@ -337,7 +352,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.ls = ls;
 		}
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -370,7 +385,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.ls = ls;
 		}
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -412,7 +427,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.ls = ls;
 		}
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -456,7 +471,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.ls = ls;
 		}
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -505,7 +520,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 			result.ls = ls;
 		}
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -582,7 +597,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		// No need for partial stabilisation as if bits were stable, they still are and ls was stabilized before
 		res.ls = leaks::blit(ls, source.ls, Start, Stop, Bits);
 
-		res.debug_assert();
+		CONSISTENCY_CHECK(res);
 		return res;
 	}
 
@@ -649,7 +664,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		res.node = &Concat(concatNodes);
 		// No need to apply partial stabilisation as if the bit was stable, it has already been stabilised
 		res.ls = leaks::replicate(ls, Bits * Count);
-		res.debug_assert();
+		CONSISTENCY_CHECK(res);
 		return res;
 	}
 
@@ -817,7 +832,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.node = &simplify(~*node);
 		result.ls = leaks::partial_stabilize(ls, result.node, result.stability);
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -859,7 +874,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.node = &simplify(*node & *other.node);
 		result.ls = leaks::partial_stabilize(leaks::merge(ls, other.ls), result.node, result.stability);
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -901,7 +916,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.node = &simplify(*node | *other.node);
 		result.ls = leaks::partial_stabilize(leaks::merge(ls, other.ls), result.node, result.stability);
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -914,7 +929,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.node = &simplify(*node ^ *other.node);
 		result.ls = leaks::partial_stabilize(leaks::merge(ls, other.ls), result.node, result.stability);
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -963,7 +978,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		result.node = &simplify(*node << *amount.node);
 		result.ls = leaks::partial_stabilize(leaks::shift_left(ls, amount.ls, Bits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1026,7 +1041,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		// arithmetic shift does not change the leakset behavior !
 		result.ls = leaks::partial_stabilize(leaks::shift_right(ls, amount.ls, Bits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1137,7 +1152,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, Bits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1151,7 +1166,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, Bits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1166,7 +1181,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.ls = leaks::partial_stabilize(leaks::mix(ls, nullptr, Bits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1227,7 +1242,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 		result.ls = leaks::partial_stabilize(leaks::mix(ls, other.ls, ResultBits), result.node, result.stability);
 
-		result.debug_assert();
+		CONSISTENCY_CHECK(result);
 		return result;
 	}
 
@@ -1454,8 +1469,8 @@ struct wire : public leakable {
 	// to allow the `on_update` method to be non-virtual.
 	template<class ObserverT>
 	bool commit([[maybe_unused]] ObserverT &observer) {
-		curr.debug_assert();
-		next.debug_assert();
+		CONSISTENCY_CHECK(curr);
+		CONSISTENCY_CHECK(next);
 		assert(Bits == curr.node->width);
 		assert(Bits == next.node->width);
 
@@ -1672,7 +1687,7 @@ struct memory : public leakable {
 				changed |= true;
 			}
 			data[entry.index] = elem_up;
-			elem_up.debug_assert();
+			CONSISTENCY_CHECK(elem_up);
 		}
 		write_queue.clear();
 		return changed;
@@ -2495,7 +2510,7 @@ value<BitsY> symb_mux(const value<1>& sel, const value<BitsY>& b, const value<Bi
 	}
 
 	// If selector is stable, conc and has no leakset, mux is just a passthrough
-	res.debug_assert();
+	CONSISTENCY_CHECK(res);
 	return res;
 }
 
@@ -2554,7 +2569,7 @@ value<BitsY> logic_not(const value<BitsA> &a) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce(a.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -2644,7 +2659,7 @@ value<BitsY> logic_and(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -2731,7 +2746,7 @@ value<BitsY> logic_or(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -2790,7 +2805,7 @@ value<BitsY> reduce_and(const value<BitsA> &a) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce(a.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -2848,7 +2863,7 @@ value<BitsY> reduce_or(const value<BitsA> &a) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce(a.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -2935,7 +2950,7 @@ value<BitsY> reduce_bool(const value<BitsA> &a) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce(a.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3158,7 +3173,7 @@ value<BitsY> eq_uu(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3253,7 +3268,7 @@ value<BitsY> ne_uu(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3348,7 +3363,7 @@ value<BitsY> gt_uu(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3393,7 +3408,7 @@ value<BitsY> gt_ss(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3434,7 +3449,7 @@ value<BitsY> lt_uu(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 
@@ -3478,7 +3493,7 @@ value<BitsY> lt_ss(const value<BitsA> &a, const value<BitsB> &b) {
 		tmp.ls = leaks::partial_stabilize(leaks::reduce_and_merge(a.ls, b.ls), tmp.node, tmp.stability);
 	}
 
-	tmp.debug_assert();
+	CONSISTENCY_CHECK(tmp);
 	return tmp;
 }
 

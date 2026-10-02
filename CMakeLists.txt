@@ -63,6 +63,13 @@ add_definitions(${CLANG_DEFINITIONS})
 add_compile_options(-Werror -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-error=shift-count-overflow -Wno-error=array-bounds)
 add_definitions(-DMUST_BIT_DECOMPOSE)
 
+# Additionnal compile option for state debugging
+option(DEBUG_STATE "Internal model state consistency checks" OFF)
+if(DEBUG_STATE)
+    message(STATUS "DEBUG_STATE is defined, models will be extremely slow")
+    add_definitions(-DDEBUG_STATE_CONSISTANCE)
+endif()
+
 # Check that default or found yosys is ok for use in aleakator
 if(NOT DEFINED YOSYS_CMD)
     find_program(YOSYS_CMD yosys REQUIRED)

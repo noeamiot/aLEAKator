@@ -4,6 +4,7 @@
 #include "cxxrtl/cxxrtl.h"
 #include "verif_msi_pp.hpp"
 #include "lss.h"
+#include "utests.h"
 
 // Global to cxxrtl, must be defined but will produce no logs here
 std::ofstream simulation_logger;
@@ -37,13 +38,15 @@ int main(int argc, char *argv[]) {
     a.stability[0] = 0x1u;
     c = cxxrtl_yosys::and_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") AND B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x000000000000001ull);
+    trap_check(stability(c) == 0x000000000000001ull);
     c = cxxrtl_yosys::or_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") OR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x000000000000001ull);
+    trap_check(stability(c) == 0x000000000000001ull);
     c = cxxrtl_yosys::xor_uu<1>(a, b);
+    std::cout << c.stability[0] << std::endl;
     std::cout << "A (" << stability(a) << ") XOR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x000000000000001ull);
+    trap_check(stability(c) == 0x000000000000001ull);
+    std::cout << "Passed" << std::endl;
 
     // One non absorbant unstable
     b.stability[0] = 0x0u;
@@ -51,14 +54,14 @@ int main(int argc, char *argv[]) {
     a.set<bool, true>(0x1u);
     c = cxxrtl_yosys::and_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") AND B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
     a.set<bool, true>(0x0u);
     c = cxxrtl_yosys::or_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") OR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
     c = cxxrtl_yosys::xor_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") XOR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
 
     // one absorbant unstable
     b.stability[0] = 0x0u;
@@ -66,39 +69,39 @@ int main(int argc, char *argv[]) {
     a.set<bool, true>(0x0u);
     c = cxxrtl_yosys::and_uu<1>(a, b);
     std::cout << "a (" << stability(a) << ") and b (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000001ull);
+    trap_check(stability(c) == 0x0000000000000001ull);
     a.set<bool, true>(0x1u);
     c = cxxrtl_yosys::or_uu<1>(a, b);
     std::cout << "a (" << stability(a) << ") or b (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000001ull);
+    trap_check(stability(c) == 0x0000000000000001ull);
     c = cxxrtl_yosys::xor_uu<1>(a, b);
     std::cout << "a (" << stability(a) << ") xor b (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
 
     // Both non absorbant and unstable
     a.stability[0] = 0x0u;
     b.stability[0] = 0x0u;
     c = cxxrtl_yosys::and_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") AND B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
     c = cxxrtl_yosys::or_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") OR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
     c = cxxrtl_yosys::xor_uu<1>(a, b);
     std::cout << "A (" << stability(a) << ") XOR B (" << stability(b) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x0000000000000000ull);
+    trap_check(stability(c) == 0x0000000000000000ull);
 
 
     // Not gate unstable
     a.stability[0] = 0x0u;
     c = cxxrtl_yosys::not_u<1>(a);
     std::cout << "NOT A (" << stability(a) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x00000000000000ull);
+    trap_check(stability(c) == 0x00000000000000ull);
 
     // Not gate stable
     a.stability[0] = 0x1u;
     c = cxxrtl_yosys::not_u<1>(a);
     std::cout << "NOT A (" << stability(a) << ") : " << stability(c) << std::endl;
-    assert(stability(c) == 0x00000000000001ull);
+    trap_check(stability(c) == 0x00000000000001ull);
     verifMSICleanup();
 }

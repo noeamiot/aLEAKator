@@ -3,6 +3,8 @@ function(gen_utest directory)
         message( STATUS "Adding utest ${name}")
     add_executable(${name})
     target_sources(${name}
+        PUBLIC
+        utests.h
         PRIVATE
         ${directory}/simulate.cpp
     )
@@ -12,6 +14,7 @@ function(gen_utest directory)
         ${VERIFMSI_PATH}
         ${LSS_PATH}
         ${ALEAKATOR_PATH}
+        ${CMAKE_CURRENT_SOURCE_DIR}
     )
     target_link_libraries(${name} PUBLIC lss aleakator verif_msi_pp)
     add_test(NAME ${name} COMMAND ${name})
