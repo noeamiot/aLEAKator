@@ -313,14 +313,20 @@ struct value : public expr_base<value<Bits>>, leakable {
 	CXXRTL_ALWAYS_INLINE
 	value<NewBits> trunc() const {
 		static_assert(NewBits <= Bits, "trunc() may not increase width");
+
 		value<NewBits> result;
-		// Set stability on all newly added bits
-		for (size_t n = 0; n < result.chunks; n++) {
-			result.data[n] = data[n];
-			result.stability[n] = stability[n];
+		if constexpr (chunks == 1 && result.chunks == 1) {
+			// DCE loop as early as possible in common case
+			result.data[0] = data[0] & result.msb_mask;
+			result.stability[0] = stability[0] & result.msb_mask;
+		} else {
+			for (size_t n = 0; n < result.chunks; n++) {
+				result.data[n] = data[n];
+				result.stability[n] = stability[n];
+			}
+			result.data[result.chunks - 1] &= result.msb_mask;
+			result.stability[result.chunks - 1] &= result.msb_mask;
 		}
-		result.data[result.chunks - 1] &= result.msb_mask;
-		result.stability[result.chunks - 1] &= result.msb_mask;
 
 		if constexpr (NewBits != Bits) {
 			result.node = &simplify(Extract(NewBits - 1, 0, *node));
@@ -339,15 +345,21 @@ struct value : public expr_base<value<Bits>>, leakable {
 	CXXRTL_ALWAYS_INLINE
 	value<NewBits> zext() const {
 		static_assert(NewBits >= Bits, "zext() may not decrease width");
-		value<NewBits> result;
-		for (size_t n = 0; n < chunks; n++) {
-			result.data[n] = data[n];
-			result.stability[n] = stability[n];
-		}
 		// Set stability on all newly added bits
-		result.stability[chunks - 1] |= ~msb_mask;
-		for (size_t n = chunks; n < result.chunks; n++)
-			result.stability[n] = chunk::mask;
+		value<NewBits> result;
+		if constexpr (chunks == 1 && result.chunks == 1) {
+			// DCE loop as early as possible in common case
+			result.data[0] = data[0];
+			result.stability[0] = stability[0] | ~msb_mask;
+		} else {
+			for (size_t n = 0; n < chunks; n++) {
+				result.data[n] = data[n];
+				result.stability[n] = stability[n];
+			}
+			result.stability[chunks - 1] |= ~msb_mask;
+			for (size_t n = chunks; n < result.chunks; n++)
+				result.stability[n] = chunk::mask;
+		}
 		result.stability[result.chunks - 1] &= result.msb_mask;
 
 		if constexpr (NewBits != Bits) {
@@ -368,9 +380,15 @@ struct value : public expr_base<value<Bits>>, leakable {
 		static_assert(NewBits >= Bits, "sext() may not decrease width");
 
 		value<NewBits> result;
-		for (size_t n = 0; n < chunks; n++) {
-			result.data[n] = data[n];
-			result.stability[n] = stability[n];
+		if constexpr (chunks == 1 && result.chunks == 1) {
+			// DCE loop as early as possible in common case
+			result.data[0] = data[0];
+			result.stability[0] = stability[0];
+		} else {
+			for (size_t n = 0; n < chunks; n++) {
+				result.data[n] = data[n];
+				result.stability[n] = stability[n];
+			}
 		}
 		if (Concis_neg()) { // It is valid to concretize as node and ls are handled correctly at the end
 			result.data[chunks - 1] |= ~msb_mask;
@@ -405,21 +423,28 @@ struct value : public expr_base<value<Bits>>, leakable {
 		value<NewBits> result;
 		constexpr size_t shift_chunks = (Bits - NewBits) / chunk::bits;
 		constexpr size_t shift_bits   = (Bits - NewBits) % chunk::bits;
-		chunk::type carry = 0;
-		chunk::type carryStab = 0;
-		if (shift_chunks + result.chunks < chunks) {
-			carry = (shift_bits == 0) ? 0
-				: data[shift_chunks + result.chunks] << (chunk::bits - shift_bits);
-			carryStab = (shift_bits == 0) ? 0
-				: stability[shift_chunks + result.chunks] << (chunk::bits - shift_bits);
-		}
-		for (size_t n = result.chunks; n > 0; n--) {
-			result.data[n - 1] = carry | (data[shift_chunks + n - 1] >> shift_bits);
-			carry = (shift_bits == 0) ? 0
-				: data[shift_chunks + n - 1] << (chunk::bits - shift_bits);
-			result.stability[n - 1] = carryStab | (stability[shift_chunks + n - 1] >> shift_bits);
-			carryStab = (shift_bits == 0) ? 0
-				: stability[shift_chunks + n - 1] << (chunk::bits - shift_bits);
+
+		if constexpr (chunks == 1 && result.chunks == 1) {
+			// DCE loop as early as possible in common case
+			result.data[0] = data[0] >> shift_bits;
+			result.stability[0] = stability[0] >> shift_bits;
+		} else {
+			chunk::type carry = 0;
+			chunk::type carryStab = 0;
+			if (shift_chunks + result.chunks < chunks) {
+				carry = (shift_bits == 0) ? 0
+					: data[shift_chunks + result.chunks] << (chunk::bits - shift_bits);
+				carryStab = (shift_bits == 0) ? 0
+					: stability[shift_chunks + result.chunks] << (chunk::bits - shift_bits);
+			}
+			for (size_t n = result.chunks; n > 0; n--) {
+				result.data[n - 1] = carry | (data[shift_chunks + n - 1] >> shift_bits);
+				carry = (shift_bits == 0) ? 0
+					: data[shift_chunks + n - 1] << (chunk::bits - shift_bits);
+				result.stability[n - 1] = carryStab | (stability[shift_chunks + n - 1] >> shift_bits);
+				carryStab = (shift_bits == 0) ? 0
+					: stability[shift_chunks + n - 1] << (chunk::bits - shift_bits);
+			}
 		}
 
 		if constexpr (NewBits != Bits) {
@@ -442,25 +467,33 @@ struct value : public expr_base<value<Bits>>, leakable {
 		value<NewBits> result;
 		constexpr size_t shift_chunks = (NewBits - Bits) / chunk::bits;
 		constexpr size_t shift_bits   = (NewBits - Bits) % chunk::bits;
-		chunk::type carry = 0;
-		chunk::type carryStab = 0;
-		for (size_t n = 0; n < chunks; n++) {
-			result.data[shift_chunks + n] = (data[n] << shift_bits) | carry;
-			carry = (shift_bits == 0) ? 0
-				: data[n] >> (chunk::bits - shift_bits);
 
-			result.stability[shift_chunks + n] = (stability[n] << shift_bits) | carryStab;
-			carryStab = (shift_bits == 0) ? 0
-				: stability[n] >> (chunk::bits - shift_bits);
-		}
-		if (shift_chunks + chunks < result.chunks) {
-			result.data[shift_chunks + chunks] = carry;
-			result.stability[shift_chunks + chunks] = carryStab;
+		if constexpr (chunks == 1 && result.chunks == 1) {
+			// DCE loop as early as possible in common case
+			result.data[0] = data[0] << shift_bits;
+			result.stability[0] = stability[0] << shift_bits;
+		} else {
+			chunk::type carry = 0;
+			chunk::type carryStab = 0;
+			for (size_t n = 0; n < chunks; n++) {
+				result.data[shift_chunks + n] = (data[n] << shift_bits) | carry;
+				carry = (shift_bits == 0) ? 0
+					: data[n] >> (chunk::bits - shift_bits);
+
+				result.stability[shift_chunks + n] = (stability[n] << shift_bits) | carryStab;
+				carryStab = (shift_bits == 0) ? 0
+					: stability[n] >> (chunk::bits - shift_bits);
+			}
+			if (shift_chunks + chunks < result.chunks) {
+				result.data[shift_chunks + chunks] = carry;
+				result.stability[shift_chunks + chunks] = carryStab;
+			}
+			// Set stability on all newly added bits TODO: Are we sure about this ?
+			for (size_t n = 0; n < shift_chunks; n++)
+				result.stability[n] = chunk::mask;
 		}
 
 		// Set stability on all newly added bits
-		for (size_t n = 0; n < shift_chunks; n++)
-			result.stability[n] = chunk::mask;
 		if (shift_bits > 0)
 			result.stability[shift_chunks] |= (chunk::mask >> (chunk::bits - shift_bits));
 
@@ -535,9 +568,15 @@ struct value : public expr_base<value<Bits>>, leakable {
 		}
 
 
-		for (size_t n = 0; n < chunks; n++) {
-			res.data[n] = masked.data[n] | shifted_clone.data[n];
-			res.stability[n] = masked.stability[n] | shifted_clone.stability[n];
+		// TODO: check that it is ok
+		if constexpr (chunks == 1 && res.chunks == 1) {
+			res.data[0] = masked.data[0] | shifted_clone.data[0];
+			res.stability[0] = masked.stability[0] | shifted_clone.stability[0];
+		} else {
+			for (size_t n = 0; n < chunks; n++) {
+				res.data[n] = masked.data[n] | shifted_clone.data[n];
+				res.stability[n] = masked.stability[n] | shifted_clone.stability[n];
+			}
 		}
 
 		// No need for partial stabilisation as if bits were stable, they still are and ls was stabilized before
@@ -1016,6 +1055,12 @@ struct value : public expr_base<value<Bits>>, leakable {
 		return result;
 	}
 
+	CXXRTL_ALWAYS_INLINE
+	value<Bits> bwmux(const value<Bits> &b, const value<Bits> &s) const {
+		assert(false && "Unimplemented.");
+		return (bit_and(s.bit_not())).bit_or(b.bit_and(s));
+	}
+
 	template<size_t ResultBits, size_t SelBits>
 	value<ResultBits> demux(const value<SelBits> &sel) const {
 		assert(false && "Unimplemented.");
@@ -1195,7 +1240,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		int64_t divisor_shift = divisor.ctlz() - dividend.ctlz();
 		assert(divisor_shift >= 0);
 		divisor = divisor.shl(value<Bits>{(chunk::type) divisor_shift});
-		for (size_t step = 0; step <= divisor_shift; step++) {
+		for (size_t step = 0; step <= (uint64_t) divisor_shift; step++) {
 			quotient = quotient.shl(value<Bits>{1u});
 			if (!dividend.ucmp(divisor)) {
 				dividend = dividend.sub(divisor);
@@ -1859,7 +1904,7 @@ struct fmt_part {
 
 			case STRING: {
 				buf.reserve(Bits/8);
-				for (int i = 0; i < Bits; i += 8) {
+				for (size_t i = 0; i < Bits; i += 8) {
 					char ch = 0;
 					for (int j = 0; j < 8 && i + j < int(Bits); j++)
 						if (val.bit(i + j))
@@ -1872,7 +1917,7 @@ struct fmt_part {
 			}
 
 			case UNICHAR: {
-				uint32_t codepoint = val.template get<uint32_t>();
+				uint32_t codepoint = val.template zcast<32>().template get<uint32_t>();
 				if (codepoint >= 0x10000)
 					buf += (char)(0xf0 |  (codepoint >> 18));
 				else if (codepoint >= 0x800)
@@ -2034,6 +2079,7 @@ struct debug_item : ::cxxrtl_object {
 		DRIVEN_SYNC = CXXRTL_DRIVEN_SYNC,
 		DRIVEN_COMB = CXXRTL_DRIVEN_COMB,
 		UNDRIVEN    = CXXRTL_UNDRIVEN,
+		GENERATED = CXXRTL_GENERATED,
 	};
 
 	const leakable* leakref = nullptr;
@@ -2357,7 +2403,7 @@ struct module {
 
 	// Compatibility method.
 #if __has_attribute(deprecated)
-	__attribute__((deprecated("Use `debug_info(path, &items, /*scopes=*/nullptr);` instead. (`path` could be \"top \".)")))
+	__attribute__((deprecated("Use `debug_info(path, &items, /*scopes=*/nullptr);` instead.")))
 #endif
 	void debug_info(debug_items &items, std::string path) {
 		debug_info(&items, /*scopes=*/nullptr, path);
@@ -2450,13 +2496,6 @@ value<BitsY> symb_mux(const value<1>& sel, const value<BitsY>& b, const value<Bi
 
 	// If selector is stable, conc and has no leakset, mux is just a passthrough
 	res.debug_assert();
-	return res;
-}
-
-// Propagate ls normally
-template<size_t BitsY>
-value<BitsY> symb_register(const value<BitsY>& a) {
-	value<BitsY> res{a};
 	return res;
 }
 
@@ -2988,7 +3027,7 @@ value<BitsY> sshl_su(const value<BitsA> &a, const value<BitsB> &b) {
 template<size_t BitsY, size_t BitsA, size_t BitsB>
 CXXRTL_ALWAYS_INLINE
 value<BitsY> shr_uu(const value<BitsA> &a, const value<BitsB> &b) {
-	return a.shr(b).template zcast<BitsY>();
+	return a.template zcast<BitsY>().shr(b);
 }
 
 template<size_t BitsY, size_t BitsA, size_t BitsB>
@@ -3562,7 +3601,7 @@ std::pair<value<BitsY>, value<BitsY>> divmod_uu(const value<BitsA> &a, const val
 	value<Bits> quotient;
 	value<Bits> remainder;
 	value<Bits> dividend = a.template zext<Bits>();
-	value<Bits> divisor = b.template zext<Bits>();
+	value<Bits> divisor  = b.template trunc<BitsB>().template zext<Bits>();
 	std::tie(quotient, remainder) = dividend.udivmod(divisor);
 	return {quotient.template trunc<BitsY>(), remainder.template trunc<BitsY>()};
 }
