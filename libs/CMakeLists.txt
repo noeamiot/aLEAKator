@@ -37,3 +37,11 @@ target_include_directories(aleakator
     ${LSS_PATH}
     ${ALEAKATOR_PATH}
 )
+
+if(TARGET LLVMObject)
+    target_link_libraries(aleakator PRIVATE LLVMObject)
+elseif(TARGET LLVM)
+    target_link_libraries(aleakator PRIVATE LLVM)
+else()
+    message(FATAL_ERROR "No suitable LLVM target found")
+endif()

@@ -34,8 +34,8 @@ namespace aes_herbst_unsecure_ns {
 }
 
 void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    assert(symbols_.contains("start_analysis") && "start_analysis symbol is mandatory for aes_herbst.");
-    assert(symbols_.contains("end_analysis") && "end_analysis symbol is mandatory for aes_herbst.");
+    assert(program_.symbols_.contains("start_analysis") && "start_analysis symbol is mandatory for aes_herbst.");
+    assert(program_.symbols_.contains("end_analysis") && "end_analysis symbol is mandatory for aes_herbst.");
 
     for (int i = 0; i < 16; ++i) {
         spt.push_back(&symbol(("aes_pt" + std::to_string(i)).c_str(), 'P', 8));
@@ -192,13 +192,13 @@ void aes_herbst_unsecure::hook_implem(Manager& manager, cxxrtl_design::p_top& to
 //            std::cout << *top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "x") + i].node << std::endl;
 //    }
 
-    if (symbols_["start_analysis"].addr == pc(top)) {
+    if (program_.symbols_["start_analysis"].addr_ == pc(top)) {
         std::cout << "Found start_analysys symbol, adjusting skip_verif_cycles !" << std::endl;
         //CFG.SKIP_VERIF_CYCLES = STEPS+3;
         manager.begin_measure();
     }
 
-    if (symbols_["end_analysis"].addr == pc(top)) {
+    if (program_.symbols_["end_analysis"].addr_ == pc(top)) {
         std::cout << "Found end_analysys symbol, adjusting skip_verif_cycles !" << std::endl;
         //CFG.SKIP_VERIF_CYCLES = 99999;
         manager.end_measure();

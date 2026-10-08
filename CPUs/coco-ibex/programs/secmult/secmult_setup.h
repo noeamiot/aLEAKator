@@ -1,5 +1,6 @@
 #ifndef SECMULT_SETUP_H
 #define SECMULT_SETUP_H
+
 #include "coco-ibex_program.h"
 
 class secmult : public CocoIbexProgram<secmult> {
@@ -7,8 +8,6 @@ class secmult : public CocoIbexProgram<secmult> {
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
-        void load_implem(cxxrtl_design::p_top& top);
-        void symbols_implem();
 
     private:
         // Program specifics

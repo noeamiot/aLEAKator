@@ -6,10 +6,12 @@
 
 #include <sys/types.h>
 #include "configuration.h"
+#include "program.h"
 
 #include "lss.h"
 
 #include "utils.hpp"
+
 struct Entry {
     enum ElementType : uint8_t {
         VALUE = CXXRTL_VALUE,
@@ -151,10 +153,12 @@ class Manager {
 
         void begin_measure();
         void end_measure();
-        bool is_measuring() { return measure_started_ and not measure_ended_; }
-        uint32_t measure_cycle() { return steps_ - begin_cycle_; }
+        bool is_measuring() const { return measure_started_ and not measure_ended_; }
+        uint32_t measure_cycle() const { return steps_ - begin_cycle_; }
         // TODO: Should take a stream and print to it
         void stat();
+
+        RawProgram load_program() const;
 
     private:
         void clean(cxxrtl::module& top);

@@ -31,9 +31,9 @@ int main(int argc, char *argv[]) {
     std::unique_ptr<Program>& program = programs[manager.config_.subprogram_];
 
     // Call the loader and symbol initializer of the program
-    program->load(top);
-    assert(program->symbols_.contains("_start") && "_start symbol is mandatory for cpus.");
-    assert(program->symbols_.contains("_hang") && "_hang symbol is mandatory for cpus.");
+    program->load(manager, top);
+    assert(program->program_.symbols_.contains("_start") && "_start symbol is mandatory for cpus.");
+    assert(program->program_.symbols_.contains("_hang") && "_hang symbol is mandatory for cpus.");
 
     // Reset (5 stage pipeline so at least 6 to be sure)
     top.p_IO__RST__N.set<bool, true>(true);
@@ -54,13 +54,13 @@ int main(int argc, char *argv[]) {
         std::cout << "Read port 0: " << std::hex << top.p_u__top__ram_2e___m__intf__io__b__read__1__data.next << std::endl;
         std::cout << "Read port 1: " << std::hex << top.p_u__top__ram_2e___m__ram__io__b__port__0__rdata.next << std::endl;
 
-        if (program->symbols_["_start"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_start"].addr_ == program->pc(top)) {
             std::cout << "Completed initialization." << std::endl;
             init_done = true;
             break;
         }
 
-        if (program->symbols_["_hang"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_hang"].addr_ == program->pc(top)) {
             std::cout << "Reached hang symbol before end of init, this is an issue." << std::endl;
             std::exit(EXIT_SUCCESS);
         }
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
         program->hook(manager, top);
 
         // Please keep in mind that the hand symbol is here only for the provided link and startup scripts
-        if (program->symbols_["_hang"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_hang"].addr_ == program->pc(top)) {
             std::cout << "Reached hang symbol, stopping aubrac." << std::endl;
             reached_end = true;
             break;

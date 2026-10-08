@@ -15,6 +15,7 @@ select -module cv32e40p_top
 flatten;
 proc;
 pmuxtree;
+bmuxmap;
 opt_expr;
 opt_clean;;;
 
@@ -46,6 +47,7 @@ hierarchy -check -top simple_system;
 flatten;
 proc;
 pmuxtree;
+bmuxmap;
 
 # These signals must be split for cxxrtl to not identify false logic loops
 select -module simple_system u_top.core_i.load_store_unit_i.data_sign_ext_q u_top.core_i.if_stage_i.prefetch_buffer_i.prefetch_controller_i.trans_addr_q  u_top.core_i.if_stage_i.prefetch_buffer_i.instruction_obi_i.gen_no_trans_stable.obi_addr_q  u_top.core_i.ex_stage_i.regfile_waddr_lsu  u_top.core_i.ex_stage_i.regfile_waddr_i  u_top.core_i.ex_stage_i.regfile_alu_waddr_fw_o  u_top.core_i.data_sign_ext_ex  u_top.core_i.cs_registers_i.mtvec_mode_o  u_top.core_i.cs_registers_i.mstatus_q  u_top.core_i.cs_registers_i.mie_q  u_top.core_i.cs_registers_i.mhpmevent_q  u_top.core_i.cs_registers_i.mhpmcounter_q  u_top.core_i.cs_registers_i.mcountinhibit_q  u_top.core_i.cs_registers_i.dcsr_q  u_top.core_i.alu_operator_ex 

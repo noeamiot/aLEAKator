@@ -8,8 +8,6 @@ class aes_herbst_unsecure : public CM4Program<aes_herbst_unsecure> {
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
-        void load_implem(cxxrtl_design::p_top& top);
-        void symbols_implem();
 
     private:
         // Program specifics

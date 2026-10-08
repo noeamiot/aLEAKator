@@ -25,35 +25,6 @@ add_custom_command(
     VERBATIM
 )
 
-# _program files are CPU-specific
-function(gen_mem program target)
-    add_custom_command(
-        OUTPUT programs/${program}_program.cpp
-        COMMAND ${CLANG_PATH}/bin/llvm-objcopy -O binary --only-section=.text ${target} programs/${program}.bin
-        COMMAND ${CLANG_PATH}/bin/llvm-objcopy -O binary --only-section=.data ${target} programs/${program}.data
-        COMMAND echo '\#include \"${program}_setup.h\"' > programs/${program}_program.cpp
-        COMMAND echo '\#include \"cxxrtl_${cpu}.h\"' >> programs/${program}_program.cpp
-        COMMAND echo 'void ${program}::load_implem\(cxxrtl_design::p_top& top\)' { >> programs/${program}_program.cpp
-        COMMAND echo 'this->symbols\(\)\;' >> programs/${program}_program.cpp
-        COMMAND od -A n -v -t x4 -w4 programs/${program}.bin | awk -v addr=0 '{
-            print \"top.memory_p_uROM_2e_RAM[\" addr \"] = value<32>{0x\" $$1 \"u}\;\"\; addr\+\=1;
-        }' >> programs/${program}_program.cpp
-        COMMAND echo '' >> programs/${program}_program.cpp
-        COMMAND od -A n -v -t x4 -w4 programs/${program}.data | awk -v addr=0 '{
-            print \"top.memory_p_uRAM_2e_RAM[\" addr \"] = value<32>{0x\" $$1 \"u}\;\"\; addr\+\=1;
-        }' >> programs/${program}_program.cpp
-        COMMAND echo "}" >> programs/${program}_program.cpp
-        DEPENDS ${target} cxxrtl_${cpu}.h
-        BYPRODUCTS programs/${program}.bin programs/${program}.data
-    )
-
-    set_source_files_properties(
-        programs/${program}_program.cpp
-        PROPERTIES
-        COMPILE_OPTIONS "-O0"
-    )
-endfunction()
-
 # Generic configuration
 set(target_opts --target=arm-none-eabi -mcpu=cortex-m4+nofp -nostdlib -ffreestanding -O3)
 message(STATUS "Target flags set to: ${target_opts}")

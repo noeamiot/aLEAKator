@@ -6,7 +6,7 @@
 
   /* jump to main program entry point (argc = argv = 0) */
 _start:
-  jal x1, main
+  jal main
   j _hang
 
 // Move appart the symbols so that they re not wrongly detected during jumps
@@ -19,5 +19,4 @@ _hang:
   .option norvc;
 
   la sp, _sram_stacktop
-  jal _start
-  j _hang
+  j _start

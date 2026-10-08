@@ -16,6 +16,24 @@ class CocoIbexProgram : public ProgramInterface<Derived> {
             {"rom", 0x0u}
         };
 
+        // Matching LD script, text and data section are respectively at beginning of ROM and RAM
+        void load_implem(Manager& manager, cxxrtl_design::p_top& top) {
+            this->program_ = manager.load_program();
+
+            size_t index = this->get_index("rom", "_text_start");
+            for (const auto& word : this->program_.text_) {
+                top.memory_p_instr__rom_2e_mem[index].set<uint32_t, true>(word);
+                index++;
+            }
+
+            index = this->get_index("ram", "_data_start");
+            for (const auto& word : this->program_.data_) {
+                this->ram[index]->curr.template set<uint32_t, true>(word);
+                index++;
+            }
+        }
+
+
         uint32_t pc_implem(cxxrtl_design::p_top& top) {
             return top.p_u__core_2e_cs__registers__i_2e_pc__id__i_40_31_40_.curr.concat(top.p_u__core_2e_cs__registers__i_2e_pc__id__i_40_30_40_.curr)
             .concat(top.p_u__core_2e_cs__registers__i_2e_pc__id__i_40_29_40_.curr).concat(top.p_u__core_2e_cs__registers__i_2e_pc__id__i_40_28_40_.curr)

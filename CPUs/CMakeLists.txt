@@ -43,17 +43,7 @@ function(gen_program cpu program)
     )
     target_link_options(${target} PRIVATE -fuse-ld=lld ${target_opts} -T ${CMAKE_CURRENT_SOURCE_DIR}/programs/link.ld)
     target_compile_options(${target} PRIVATE ${target_opts})
-    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C)
-
-    add_custom_command(
-        OUTPUT programs/${program}_symbols.cpp
-        COMMAND echo '\#include \"${program}_setup.h\"' > programs/${program}_symbols.cpp
-        COMMAND echo 'void ${program}::symbols_implem\(\)' { >> programs/${program}_symbols.cpp
-        COMMAND ${CLANG_PATH}/bin/llvm-nm --print-size ${target} | while read -r addr size type name\; do echo \"symbols_[\\\"$$name\\\"] = {0x$$addr, 0x$$size}\;\"\; done >> programs/${program}_symbols.cpp
-        COMMAND echo "}" >> programs/${program}_symbols.cpp
-        DEPENDS ${target}
-    )
-    gen_mem(${program} ${target})
+    set_target_properties(${target} PROPERTIES LINKER_LANGUAGE C OUTPUT_NAME programs/bin/${program})
 endfunction()
 
 function(gen_bootloader cpu)
@@ -68,6 +58,7 @@ endfunction()
 # Loop through the program folder subdirectories and call gen_program for each
 function(gen_all_programs cpu generated_programs)
     set(generated_programs "")
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/programs/bin/)
     file(GLOB programs programs/* LIST_DIRECTORIES YES)
     foreach(program_path ${programs})
         file(GLOB program_setup_file ${program_path}/*_setup.cpp)
@@ -81,22 +72,22 @@ function(gen_all_programs cpu generated_programs)
 
     string(REGEX REPLACE "([^;]+)" "#include\"\\1_setup.h\"" includes "${generated_programs}")
     string(REGEX REPLACE "([^;]+)" "programs[\"\\1\"]=std::make_unique<\\1>()" instances "${generated_programs}")
-    string(REGEX REPLACE "([^;]+)" "programs/\\1_program.cpp;programs/\\1_symbols.cpp" progs "${generated_programs}")
     list(JOIN includes "\\n" includes)
     list(JOIN instances "\;\\n" instances)
+    list(TRANSFORM generated_programs PREPEND "${cpu}-" OUTPUT_VARIABLE all_targets_programs)
     add_custom_command(
         OUTPUT programs_include.h programs_instance.h
         COMMAND /bin/echo -e \'${includes}\' > programs_include.h
         COMMAND /bin/echo -e \'${instances}\;\' > programs_instance.h
         DEPENDS
     )
-    add_custom_target(${cpu}_all_programs DEPENDS programs_include.h programs_instance.h ${progs})
+    add_custom_target(${cpu}_all_programs DEPENDS programs_include.h programs_instance.h ${all_targets_programs})
     return(PROPAGATE cpu generated_programs)
 endfunction()
 
 # There is a third, optionnal argument which is a list of configs
 function(gen_cpu cpu generated_programs)
-        string(REGEX REPLACE "([^;]+)" "programs/\\1/\\1_setup.cpp;${CMAKE_CURRENT_BINARY_DIR}/programs/\\1_program.cpp;${CMAKE_CURRENT_BINARY_DIR}/programs/\\1_symbols.cpp" generated_load_symb "${generated_programs}")
+        string(REGEX REPLACE "([^;]+)" "programs/\\1/\\1_setup.cpp" programs_setups "${generated_programs}")
         string(REGEX REPLACE "([^;]+)" "programs/\\1/\\1_setup.h" programs_headers "${generated_programs}")
         string(REGEX REPLACE "([^;]+)" "programs/\\1/" programs_dirs "${generated_programs}")
 
@@ -119,7 +110,7 @@ function(gen_cpu cpu generated_programs)
                 PRIVATE
                 simulate.cpp
                 ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}${cfg}.cpp
-                ${generated_load_symb}
+                ${programs_setups}
                 PUBLIC
                 ${CMAKE_CURRENT_BINARY_DIR}/cxxrtl_${cpu}${cfg}.h
                 ${CMAKE_CURRENT_BINARY_DIR}/programs_include.h

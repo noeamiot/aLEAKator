@@ -10,19 +10,15 @@ namespace cxxrtl_design {
     struct p_top;
 }
 
+// TODO: Replace assertions
 class Program {
-    struct Symbol {
-        unsigned int addr;
-        unsigned int size;
-    };
 public:
     // Interface to run programs
     virtual void init(Manager& manager, cxxrtl_design::p_top& top) = 0;
     virtual void conclude(Manager& manager, cxxrtl_design::p_top& top) = 0;
     virtual void hook(Manager& manager, cxxrtl_design::p_top& top) = 0;
-    virtual void load(cxxrtl_design::p_top& top) = 0;
-    virtual void symbols() = 0;
 
+    virtual void load(Manager& manager, cxxrtl_design::p_top& top) = 0;
     virtual uint32_t pc(cxxrtl_design::p_top& top) = 0;
 
     // Interface for program helpers
@@ -31,7 +27,7 @@ public:
     virtual size_t get_size(const std::string& symbol) = 0;
     virtual cxxrtl::value<32> get_mask(const std::string& symbol) = 0;
 
-    std::map<std::string, Symbol> symbols_;
+    RawProgram program_;
     std::map<Node*, Node*> symbol_to_conc_;
 
     virtual ~Program() = default;
@@ -57,43 +53,40 @@ class ProgramInterface : public Program {
         virtual void hook(Manager& manager, cxxrtl_design::p_top& top) override final {
             static_cast<Derived*>(this)->hook_implem(manager, top);
         }
-        virtual void load(cxxrtl_design::p_top& top) override final {
-            static_cast<Derived*>(this)->load_implem(top);
-        }
-        virtual void symbols() override final {
-            static_cast<Derived*>(this)->symbols_implem();
+        virtual void load(Manager& manager, cxxrtl_design::p_top& top) override final {
+            static_cast<Derived*>(this)->load_implem(manager, top);
         }
 
         // CPU Specifics (for now specialized for 32 bits processors)
         virtual size_t get_position(const std::string& symbol) override final {
-            assert(symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
+            assert(program_.symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
 
             // No need to substract section mapping boundary, it is at least aligned by 2**2
-            return (symbols_.at(symbol).addr)%4;
+            return (program_.symbols_.at(symbol).addr_)%4;
         }
 
         virtual size_t get_index(const std::string& memory, const std::string& symbol) override final {
             assert(static_cast<Derived*>(this)->memory_mapping_.contains(memory) && "Unknown memory region.");
-            assert(symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
+            assert(program_.symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
 
-            return (symbols_.at(symbol).addr - static_cast<Derived*>(this)->memory_mapping_.at(memory))/4;
+            return (program_.symbols_.at(symbol).addr_ - static_cast<Derived*>(this)->memory_mapping_.at(memory))/4;
         }
 
         virtual size_t get_size(const std::string& symbol) override final {
-            assert(symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
+            assert(program_.symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
 
-            return symbols_.at(symbol).size;
+            return program_.symbols_.at(symbol).size_;
         }
 
         virtual cxxrtl::value<32> get_mask(const std::string& symbol) override final {
-            assert(symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
+            assert(program_.symbols_.contains(symbol) && "Symbol table does not contain wanted symbol.");
 
             size_t position = this->get_position(symbol);
 
             // Cannot generate a mask for a symbol that goes over the current word boundary
-            assert(symbols_.at(symbol).size + position <= 4);
+            assert(program_.symbols_.at(symbol).size_ + position <= 4);
 
-            return cxxrtl::value<32>((0xFFFFFFFFu >> ((4 - symbols_[symbol].size) * 8)) << (position * 8));
+            return cxxrtl::value<32>((0xFFFFFFFFu >> ((4 - program_.symbols_[symbol].size_) * 8)) << (position * 8));
         }
 
         virtual ~ProgramInterface() = default;

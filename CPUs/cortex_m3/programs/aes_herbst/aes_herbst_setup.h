@@ -1,5 +1,6 @@
 #ifndef AES_HERBST_SETUP_H
 #define AES_HERBST_SETUP_H
+
 #include "cortex_m3_program.h"
 
 class aes_herbst : public CM3Program<aes_herbst> {
@@ -7,8 +8,6 @@ class aes_herbst : public CM3Program<aes_herbst> {
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
-        void load_implem(cxxrtl_design::p_top& top);
-        void symbols_implem();
 
     private:
         // Program specifics

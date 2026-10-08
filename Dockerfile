@@ -1,15 +1,18 @@
 FROM ubuntu:resolute AS aleakator_builder
 
-RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libffi-dev libfl-dev libreadline-dev pkg-config tcl-dev zlib1g-dev curl cmake libboost-program-options1.83-dev gnat-13 libxml2-16 && apt clean
+RUN apt update && apt install -y unzip gawk git make python3 lld bison flex libffi-dev libfl-dev libreadline-dev pkg-config tcl-dev zlib1g-dev curl cmake libboost-program-options1.83-dev gnat-13 libxml2-16 libzstd-dev && apt clean
 # libxml changed for precompiled lld
 RUN ln -s /lib/x86_64-linux-gnu/libxml2.so.16 /lib/x86_64-linux-gnu/libxml2.so.2
 
-RUN git clone --recurse-submodules --depth 1 https://github.com/noeamiot/yosys /src/yosys-aleakator -b v0.69
-
+RUN mkdir -p /src/clang/
 RUN curl -L --output /src/clang.tar.xz https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/clang+llvm-17.0.6-x86_64-linux-gnu-ubuntu-22.04.tar.xz
-RUN mkdir -p /src/clang/ && tar xvf /src/clang.tar.xz --strip-components=1 -C /src/clang && rm /src/clang.tar.xz
+RUN tar xvf /src/clang.tar.xz --strip-components=1 -C /src/clang && rm /src/clang.tar.xz
+# Distant LLVM is compiled with shared zstd support.
+# This hideous fix enables us to link everything as static
+RUN sed -i 's/\<zstd::libzstd_shared\>/zstd::libzstd_static/g' /src/clang/lib/cmake/llvm/LLVMExports.cmake
 
 # Install custom yosys
+RUN git clone --recurse-submodules --depth 1 https://github.com/noeamiot/yosys /src/yosys-aleakator -b v0.69
 WORKDIR /src/yosys-aleakator
 RUN cmake -B build . -DCMAKE_BUILD_TYPE=Release && cmake --build build --parallel 6 && cmake --install build --strip
 RUN curl -L --output /src/sv2v.zip https://github.com/zachjs/sv2v/releases/download/v0.0.13/sv2v-Linux.zip && unzip /src/sv2v.zip -d /src/sv2v/ && cp /src/sv2v/sv2v-Linux/sv2v /bin/ && rm -r /src/sv2v /src/sv2v.zip
@@ -35,7 +38,7 @@ RUN BUILD_PYTHON=0 CXX=clang++ make -j
 # Compile aleakator (copy local version instead of cloning it)
 ADD . /src/aleakator
 # Exploit build cache, very much appreciated to developpement build
-RUN --mount=type=cache,target=/src/aleakator/build cd /src/aleakator/build && cmake -DCMAKE_BUILD_TYPE=Release -DCLANG_PATH=/src/clang/ -DVERIFMSI_PATH=/src/verif_msi_pp/ .. && make -j6 && cp -ra . /src/res_aleakator/
+RUN --mount=type=cache,target=/src/aleakator/build cd /src/aleakator/build && cmake -DCMAKE_BUILD_TYPE=Release -DLLVM_ROOT=/src/clang/ -DVERIFMSI_PATH=/src/verif_msi_pp/ -DSTATIC_BUILD=ON .. && make -j6 && cp -ra . /src/res_aleakator/
 WORKDIR /src/res_aleakator/
 
 # Second stage: minimal runtime image

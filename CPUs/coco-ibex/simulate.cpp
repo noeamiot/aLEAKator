@@ -16,12 +16,17 @@ bool prepare_step(Manager& manager, cxxrtl_design::p_top& top) {
     return manager.step(top);
 }
 
+template<size_t reg>
+uint32_t getRegister(cxxrtl_design::p_top& top) {
+	return top.p_u__core_2e_register__file__i_2e_rf__reg__tmp.curr.slice<32*reg - 1, 32*(reg-1)>().val().template get<uint32_t>();
+}
+
 // Ugly trick to access memory that isn't represented as memory due to register representation
 // of ram of coco's modification to ibex
 // The mapping is reversed in the verilog (lowest indices mapped to last accessible data) so we
 // reverse it once again here to not modify coco-ibex's core.
 std::array<cxxrtl::wire<32>*, MEM_SIZE+1> RAM_POINTER_ARRAY{};
-void ram(cxxrtl_design::p_top& top) {
+void init_ram(cxxrtl_design::p_top& top) {
     RAM_POINTER_ARRAY[127] = &top.p_u__ram_2e_mem_5b_0_5d_;
     RAM_POINTER_ARRAY[126] = &top.p_u__ram_2e_mem_5b_1_5d_;
     RAM_POINTER_ARRAY[125] = &top.p_u__ram_2e_mem_5b_2_5d_;
@@ -152,11 +157,6 @@ void ram(cxxrtl_design::p_top& top) {
     RAM_POINTER_ARRAY[0] = &top.p_u__ram_2e_mem_5b_127_5d_;
 }
 
-template<size_t reg>
-uint32_t getRegister(cxxrtl_design::p_top& top) {
-	return top.p_u__core_2e_register__file__i_2e_rf__reg__tmp.curr.slice<32*reg - 1, 32*(reg-1)>().val().template get<uint32_t>();
-}
-
 int main(int argc, char *argv[]) {
     std::map<std::string, std::unique_ptr<Program>> programs;
     // This file is generated and filss the programs array
@@ -166,6 +166,8 @@ int main(int argc, char *argv[]) {
     cxxrtl_design::p_top top;
     config.EXCEPTIONS_WORD_VERIF_["u_core register_file_i rf_reg_tmp"] = 32;
     Manager manager(top, config);
+    // Step only necessary for coco-ibex, only has to be done once
+    init_ram(top);
 
     // There are assertions before about non existing programs but
     // formally perform it here where the list is definitive
@@ -173,12 +175,11 @@ int main(int argc, char *argv[]) {
         throw std::invalid_argument( "Program does not exist in driver memory." );
     std::unique_ptr<Program>& program = programs[manager.config_.subprogram_];
 
-    ram(top);
 
     // Call the loader and symbol initializer of the program
-    program->load(top);
-    assert(program->symbols_.contains("_start") && "_start symbol is mandatory for cpus.");
-    assert(program->symbols_.contains("_hang") && "_hang symbol is mandatory for cpus.");
+    program->load(manager, top);
+    assert(program->program_.symbols_.contains("_start") && "_start symbol is mandatory for cpus.");
+    assert(program->program_.symbols_.contains("_hang") && "_hang symbol is mandatory for cpus.");
 
     // Reset
     top.p_rst__sys__n.set<bool, true>(false);
@@ -196,13 +197,13 @@ int main(int argc, char *argv[]) {
         std::cout << "PC: " << std::hex << program->pc(top) << std::dec << std::endl;
         std::cout << "SP : " << std::hex << getRegister<2>(top) << std::dec << std::endl;
 
-        if (program->symbols_["_start"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_start"].addr_ == program->pc(top)) {
             std::cout << "Completed initialization." << std::endl;
             init_done = true;
             break;
         }
 
-        if (program->symbols_["_hang"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_hang"].addr_ == program->pc(top)) {
             std::cout << "Reached hang symbol before end of init, this is an issue." << std::endl;
             std::exit(EXIT_SUCCESS);
         }
@@ -254,7 +255,7 @@ int main(int argc, char *argv[]) {
         program->hook(manager, top);
 
         // Please keep in mind that the hand symbol is here only for the provided link and startup scripts
-        if (program->symbols_["_hang"].addr == program->pc(top)) {
+        if (program->program_.symbols_["_hang"].addr_ == program->pc(top)) {
             std::cout << "Reached hang symbol, stopping ibex." << std::endl;
             reached_end = true;
             break;

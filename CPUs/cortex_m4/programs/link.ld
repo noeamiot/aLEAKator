@@ -7,34 +7,40 @@ SECTIONS
 {
     . = 0x0;
     .text : {
+        _text_start = .;
         KEEP(*(.vectors))
         *(.text)
         *(.text.*)
-        . = ALIGN(4);
-    } > ROM
-
-    .data : {
-        . = ALIGN(4);
-        _sram_sdata = .;
-        *(.data)
-        *(.data.*)
         *(.rodata)
         *(.rodata.*)
+        . = ALIGN(4);
+        _text_end = .;
+    } > ROM
+
+    /* Add a little space between sections */
+    .data : ALIGN(16) {
+        _data_start = .;
+        *(.data)
+        *(.data.*)
+        *(.sdata);
+        *(.sdata.*);
         *(.got)
         . = ALIGN(4);
-        _sram_edata = .;
-    } > RAM AT > ROM
+        _data_end = .;
+    } > RAM
 
     _flash_sdata = LOADADDR(.data);
 
     .bss : {
         . = ALIGN(4);
-        _sram_sbss = .;
+        _bss_start = .;
         *(.bss)
         *(.bss.*)
+        *(.sbss)
+        *(.sbss.*)
         *(COMMON)
         . = ALIGN(4);
-        _sram_ebss = .;
+        _bss_end = .;
     } > RAM
 
     _sram_stacktop = ORIGIN(RAM) + LENGTH(RAM);

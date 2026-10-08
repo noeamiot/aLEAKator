@@ -8,8 +8,6 @@ class dom_and : public AubracProgram<dom_and> {
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
-        void load_implem(cxxrtl_design::p_top& top);
-        void symbols_implem();
 
     private:
         // Program specifics

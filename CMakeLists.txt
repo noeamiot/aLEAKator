@@ -1,18 +1,41 @@
 cmake_minimum_required(VERSION 3.28)
 
-if(NOT DEFINED CLANG_PATH)
-    set(CLANG_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/clang/")
+# User can specify another LLVM+CLANG instalation than the default one
+set(LLVM_ROOT "" CACHE PATH "")
+option(LLVM_ROOT "A specific LLVM/Clang installation to use" "")
+
+if (LLVM_ROOT)
+    set(CMAKE_C_COMPILER "${LLVM_ROOT}/bin/clang" CACHE FILEPATH "C compiler" FORCE)
+    set(CMAKE_CXX_COMPILER "${LLVM_ROOT}/bin/clang++" CACHE FILEPATH "C++ compiler" FORCE)
+    set(CMAKE_LINKER ${LLVM_ROOT}/bin/ld.lld)
+else()
+    set(CMAKE_C_COMPILER "clang")
+    set(CMAKE_CXX_COMPILER "clang++")
+    set(CMAKE_LINKER "ld.lld")
 endif()
-set(CMAKE_LINKER ${CLANG_PATH}bin/ld.lld)
-set(CMAKE_ASM_LINK_EXECUTABLE ${CLANG_PATH}bin/ld.lld)
-set(CMAKE_EXE_LINKER_FLAGS "-static")
-set(CMAKE_C_COMPILER ${CLANG_PATH}bin/clang)
-set(CMAKE_CXX_COMPILER ${CLANG_PATH}bin/clang++)
 
 project(aleakator_all LANGUAGES C CXX)
 
+# Force the compiler to be clang, this is a requirement for cxxrtl model building
+if (NOT CMAKE_C_COMPILER_ID STREQUAL "Clang"
+    OR NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR
+        "aLEAKator requires Clang.\n"
+        "C compiler: ${CMAKE_C_COMPILER}\n"
+        "C++ compiler: ${CMAKE_CXX_COMPILER}"
+    )
+endif()
+
+if(STATIC_BUILD)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(ZLIB_USE_STATIC_LIBS ON)
+    add_link_options(-static)
+    message(STATUS "Will compile statically")
+endif()
+
 # Default value for build type, will be cached
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
@@ -25,7 +48,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
 if(NOT DEFINED VERIFMSI_PATH)
-    set(VERIFMSI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../Projets/verif_msi_pp/")
+    set(VERIFMSI_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../verif_msi_pp/")
 endif()
 set(VERIFMSI_HEADERS ${VERIFMSI_PATH}/include/)
 
@@ -42,21 +65,20 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Clang 17.0.6 EXACT REQUIRED PATHS ${CLANG_PATH})
-# Add path to LLVM modules
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${LLVM_CMAKE_DIR}"
-  )
+find_package(ZLIB REQUIRED)
 
-# import LLVM CMake functions
+if(LLVM_ROOT)
+    find_package(LLVM REQUIRED CONFIG PATHS ${LLVM_ROOT})
+    find_package(Clang REQUIRED CONFIG PATHS ${LLVM_ROOT})
+else()
+    find_package(LLVM REQUIRED CONFIG)
+    find_package(Clang REQUIRED CONFIG)
+endif()
+
 include(AddLLVM)
 
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${CLANG_INCLUDE_DIRS})
-
-add_definitions(${LLVM_DEFINITIONS})
-add_definitions(${CLANG_DEFINITIONS})
 
 # Be careful, these options are defined for ALL compiled elements, from lib to C programs of CPUs
 # The warnings excluded from -Werror are due to false positives in clang, see https://github.com/llvm/llvm-project/issues/61025
@@ -105,19 +127,21 @@ if (GHDL_ENABLE)
     message(STATUS "Yosys supports GHDL module loading: OK")
 endif()
 
-set(YOSYS_OPTS "-g")
+set(YOSYS_OPTS "-g" "--logfile" "synth.log" "--quiet")
 set(YOSYS_COMMON_STEPS "flatten; proc; pmuxtree; opt_expr; opt_clean;;;  check; opt -nodffe -nosdff; fsm; opt; peepopt; opt_clean; share; opt; memory -nomap; opt_clean; opt -fast -full; memory_map; opt -full; opt_clean; dffunmap; rename -enumerate;")
 set(CXXRTL_OPTS "-O6 -g4 -header -print-symbolic")
 
-set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.83 CONFIG REQUIRED COMPONENTS program_options)
-#set(CMAKE_C_COMPILER_TARGET $TARGET)
 
 
 # Define the verif_msi_pp library specifics
 add_library(verif_msi_pp STATIC IMPORTED)
+set(VERIFMSI_LIBRARY "${VERIFMSI_PATH}/libverif_msi_pp.a")
+if(NOT EXISTS "${VERIFMSI_LIBRARY}")
+    message(FATAL_ERROR "verif_msi_pp library not found: ${VERIFMSI_LIBRARY}")
+endif()
 set_target_properties(verif_msi_pp PROPERTIES
-  IMPORTED_LOCATION "${VERIFMSI_PATH}/libverif_msi_pp.a"
+  IMPORTED_LOCATION "${VERIFMSI_LIBRARY}"
 )
 
 add_library(cxxrtl INTERFACE ${CXXRTL_HEADERS})

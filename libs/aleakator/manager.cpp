@@ -81,6 +81,18 @@ Manager::~Manager() {
     leakage_file_.close();
 }
 
+RawProgram Manager::load_program() const {
+    if (config_.circuit_type_ != Configuration::CPU)
+        throw std::invalid_argument( "Loading a program is a CPU only feature." );
+
+    std::string bin_path = config_.working_path_/"../../programs/bin/"/config_.subprogram_;
+    if (not fs::exists(bin_path))
+        throw std::invalid_argument( "No binary found at: " + bin_path );
+
+    // If we are a CPU program
+    return BinaryLoader::load(bin_path);
+}
+
 bool Manager::step(cxxrtl::module& top) {
     simulation_logger << "-------" << std::endl << "Cycle: " << steps_ << std::endl;
     std::cout << "Looping simulation step " << steps_ << ", ls : " << leaks::LeakSet::ls_mem_.size() << ", nodes : " << Node::nodeNum << ", cacheSet : " << verified_TWG_ << std::endl;

@@ -268,7 +268,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 		memcpy(&unsigned_value, &value, sizeof(IntegerT));
 		set(unsigned_value);
 
-		assert(false && "Unimplemented");
+		static_assert(false && "Unimplemented.");
 	}
 
 	CXXRTL_ALWAYS_INLINE
@@ -672,12 +672,12 @@ struct value : public expr_base<value<Bits>>, leakable {
 	//
 	// These operations are used for computations.
 	bool bit(size_t offset) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		return data[offset / chunk::bits] & (1 << (offset % chunk::bits));
 	}
 
 	void set_bit(size_t offset, bool value = true) {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		size_t offset_chunks = offset / chunk::bits;
 		size_t offset_bits = offset % chunk::bits;
 		data[offset_chunks] &= ~(1 << offset_bits);
@@ -1052,7 +1052,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 	template<size_t ResultBits, size_t SelBits>
 	value<ResultBits> bmux(const value<SelBits> &sel) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		static_assert(ResultBits << SelBits == Bits, "invalid sizes used in bmux()");
 		size_t amount = sel.data[0] * ResultBits;
 		size_t shift_chunks = amount / chunk::bits;
@@ -1072,13 +1072,13 @@ struct value : public expr_base<value<Bits>>, leakable {
 
 	CXXRTL_ALWAYS_INLINE
 	value<Bits> bwmux(const value<Bits> &b, const value<Bits> &s) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		return (bit_and(s.bit_not())).bit_or(b.bit_and(s));
 	}
 
 	template<size_t ResultBits, size_t SelBits>
 	value<ResultBits> demux(const value<SelBits> &sel) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		static_assert(Bits << SelBits == ResultBits, "invalid sizes used in demux()");
 		size_t amount = sel.data[0] * Bits;
 		size_t shift_chunks = amount / chunk::bits;
@@ -1111,7 +1111,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 	}
 
 	size_t ctlz() const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		size_t count = 0;
 		for (size_t n = 0; n < chunks; n++) {
 			chunk::type x = data[chunks - 1 - n];
@@ -1247,7 +1247,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 	}
 
 	std::pair<value<Bits>, value<Bits>> udivmod(value<Bits> divisor) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		value<Bits> quotient;
 		value<Bits> dividend = *this;
 		if (dividend.ucmp(divisor))
@@ -1267,7 +1267,7 @@ struct value : public expr_base<value<Bits>>, leakable {
 	}
 
 	std::pair<value<Bits>, value<Bits>> sdivmod(const value<Bits> &other) const {
-		assert(false && "Unimplemented.");
+		static_assert(false && "Unimplemented.");
 		value<Bits + 1> quotient;
 		value<Bits + 1> remainder;
 		value<Bits + 1> dividend = sext<Bits + 1>();
