@@ -3,6 +3,7 @@ module top (
   input  D, clk,
   output Q, out
 );
+    reg Q;
     assign out = Q;
     always @(posedge clk) begin
         Q <= D;

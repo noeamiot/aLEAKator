@@ -4,9 +4,9 @@ module top(input a0, input a1, input a2, input b0, input b1, input b2, input z10
     wire a2b1z21, a1b2z21;
     wire a0b2z20, a2b0z20;
 
-    wire ra0b1z10, ra1b0z10;
-    wire ra2b1z21, ra1b2z21;
-    wire ra0b2z20, ra2b0z20;
+    reg ra0b1z10, ra1b0z10;
+    reg ra2b1z21, ra1b2z21;
+    reg ra0b2z20, ra2b0z20;
     wire prec2, prec1, prec0;
 
     assign a2b2 = a2 & b2;

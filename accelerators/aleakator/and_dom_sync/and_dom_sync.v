@@ -1,6 +1,7 @@
 module top(input a0, input a1, input b0, input b1, input z, input clk, output c0, output c1);
     wire a0b0, a0b1, a1b0, a1b1;
     wire a0b1z, a1b0z;
+    reg tmp0, tmp1, tmp2, tmp3;
 
     assign a0b0 = a0 & b0;
     assign a0b1 = a0 & b1;

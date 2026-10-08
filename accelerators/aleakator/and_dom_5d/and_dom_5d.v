@@ -33,6 +33,17 @@ module top(
     output c4,
     output c5,
 input clk);
+
+wire a0b0, a0b1, a0b2, a0b3, a0b4, a0b5, a1b0, a1b1, a1b2, a1b3, a1b4, a1b5, a2b0, a2b1, a2b2, a2b3;
+wire a2b4, a2b5, a3b0, a3b1, a3b2, a3b3, a3b4, a3b5, a4b0, a4b1, a4b2, a4b3, a4b4, a4b5, a5b0, a5b1;
+wire a5b2, a5b3, a5b4, a5b5;
+wire a1zb0, a0zb1, a2zb0, a0zb2, a2zb1, a1zb2, a3zb0, a0zb3, a3zb1, a1zb3, a3zb2, a2zb3, a4zb0;
+wire a0zb4, a4zb1, a1zb4, a4zb2, a2zb4, a4zb3, a3zb4, a5zb0, a0zb5, a5zb1, a1zb5, a5zb2, a2zb5;
+wire a5zb3, a3zb5, a5zb4, a4zb5;
+reg ra1b0, ra0b1, ra2b0, ra0b2, ra2b1, ra1b2, ra3b0, ra0b3, ra3b1, ra1b3, ra3b2, ra2b3, ra4b0;
+reg ra0b4, ra4b1, ra1b4, ra4b2, ra2b4, ra4b3, ra3b4, ra5b0, ra0b5, ra5b1, ra1b5, ra5b2, ra2b5;
+reg ra5b3, ra3b5, ra5b4, ra4b5;
+
 assign a0b0 = (a0 & b0);
 assign a0b1 = (a0 & b1);
 assign a0b2 = (a0 & b2);
