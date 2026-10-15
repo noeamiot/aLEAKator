@@ -5,6 +5,7 @@
 
 class simple : public AubracProgram<simple> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
@@ -12,5 +13,7 @@ class simple : public AubracProgram<simple> {
     private:
         // Program specifics
         Node* a;
+
+        std::vector<Node*> sa;
 };
 #endif

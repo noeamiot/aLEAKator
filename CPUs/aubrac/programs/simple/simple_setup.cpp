@@ -1,13 +1,13 @@
 #include "simple_setup.h"
 
-void simple::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    manager.begin_measure();
+void simple::initial_init_implem(Manager& manager) {
     a = &symbol("a", 'S', 32);
 
-    std::cout << "Will insert a0 GPR 8: " << std::endl;
-    std::cout << "Will insert a1 GPR 9: " << std::endl;
+    sa = manager.get_shares(*a, 2);
+}
 
-    std::vector<Node*> sa = getPseudoShares(*a, 2);
+void simple::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
+    manager.begin_measure();
 
     cxxrtl::value<32> a0{0xFFFFFFFFu};
     cxxrtl::value<32> a1{0xFFFFFFFFu};

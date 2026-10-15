@@ -50,27 +50,33 @@ std::map<std::string, Symbol> collect_symbols(const std::string& file,
     std::map<std::string, Symbol> symbols;
     for (const auto& symb : obj.symbols()) {
         llvm::Expected<llvm::StringRef> name = symb.getName();
-        if (not name)
+        if (not name) {
+            llvm::consumeError(name.takeError());
             continue;
+        }
         llvm::Expected<llvm::object::section_iterator> sec = symb.getSection();
         if (not sec or sec.get() == obj.section_end())
             continue;
         if (not (sec.get()->isData() || sec.get()->isBSS() || sec.get()->isText()))
             continue;
         llvm::Expected<uint64_t> addr = symb.getAddress();
-        if (not addr)
+        if (not addr) {
+            llvm::consumeError(addr.takeError());
             continue;
+        }
+        const llvm::object::ELFSymbolRef elf_sym(symb);
+        uint64_t size = elf_sym.getSize();
 
         symbols[name.get().str()] = Symbol{
             static_cast<uint32_t>(addr.get()),
-            static_cast<uint32_t>(symb.getCommonSize())};
+            static_cast<uint32_t>(size)};
     }
     return symbols;
 }
 
 } // namespace
 
-RawProgram BinaryLoader::load(const std::string &file) {
+RawProgram BinaryLoader::load(const std::string& file) {
     llvm::object::OwningBinary<llvm::object::Binary> owning = open_elf(file);
     llvm::object::ObjectFile* obj = llvm::dyn_cast<llvm::object::ObjectFile>(owning.getBinary());
 

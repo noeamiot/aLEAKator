@@ -5,6 +5,7 @@
 
 class refresh : public CM4Program<refresh> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
@@ -13,5 +14,7 @@ class refresh : public CM4Program<refresh> {
         // Program specifics
         Node* a;
         Node* m;
+
+        std::vector<Node*> sa;
 };
 #endif

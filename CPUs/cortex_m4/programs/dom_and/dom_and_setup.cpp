@@ -1,26 +1,23 @@
 #include "dom_and_setup.h"
 #include "cxxrtl_cortex_m4.h"
 
-void dom_and::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    manager.begin_measure();
+void dom_and::initial_init_implem(Manager& manager) {
     a = &symbol("a", 'S', 32);
     b = &symbol("b", 'S', 32);
     m = &symbol("m", 'M', 32);
 
-    std::cout << "Will insert a0 in index: " << this->get_index("ram", "a0") << std::endl;
-    std::cout << "Will insert a1 in index: " << this->get_index("ram", "a1") << std::endl;
-    std::cout << "Will insert b0 in index: " << this->get_index("ram", "b0") << std::endl;
-    std::cout << "Will insert b1 in index: " << this->get_index("ram", "b1") << std::endl;
-    std::cout << "Will insert m in index: " << this->get_index("ram", "m") << std::endl;
+    sa = manager.get_shares(*a, 2);
+    sb = manager.get_shares(*b, 2);
+}
 
-    std::vector<Node*> sa = getPseudoShares(*a, 2);
-    std::vector<Node*> sb = getPseudoShares(*b, 2);
+void dom_and::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
+    manager.begin_measure();
 
-    cxxrtl::value<32> a0 = top.memory_p_uRAM_2e_RAM[this->get_index("ram", "a0")];
-    cxxrtl::value<32> a1 = top.memory_p_uRAM_2e_RAM[this->get_index("ram", "a1")];
-    cxxrtl::value<32> b0 = top.memory_p_uRAM_2e_RAM[this->get_index("ram", "b0")];
-    cxxrtl::value<32> b1 = top.memory_p_uRAM_2e_RAM[this->get_index("ram", "b1")];
-    cxxrtl::value<32> m0 = top.memory_p_uRAM_2e_RAM[this->get_index("ram", "m")];
+    cxxrtl::value<32> a0 = ram(top)[get_index("ram", "a0")];
+    cxxrtl::value<32> a1 = ram(top)[get_index("ram", "a1")];
+    cxxrtl::value<32> b0 = ram(top)[get_index("ram", "b0")];
+    cxxrtl::value<32> b1 = ram(top)[get_index("ram", "b1")];
+    cxxrtl::value<32> m0 = ram(top)[get_index("ram", "m")];
 
     a0.setNode(sa[0]);
     a1.setNode(sa[1]);
@@ -34,23 +31,21 @@ void dom_and::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
     symbol_to_conc_.insert({a, &constant(a0.get<uint32_t>() ^ a1.get<uint32_t>(), 32)});
     symbol_to_conc_.insert({b, &constant(b0.get<uint32_t>() ^ b1.get<uint32_t>(), 32)});
 
-    top.memory_p_uRAM_2e_RAM.update(this->get_index("ram", "a0"), a0, cxxrtl::value<32>{0xFFFFFFFFu});
-    top.memory_p_uRAM_2e_RAM.update(this->get_index("ram", "a1"), a1, cxxrtl::value<32>{0xFFFFFFFFu});
-    top.memory_p_uRAM_2e_RAM.update(this->get_index("ram", "b0"), b0, cxxrtl::value<32>{0xFFFFFFFFu});
-    top.memory_p_uRAM_2e_RAM.update(this->get_index("ram", "b1"), b1, cxxrtl::value<32>{0xFFFFFFFFu});
-    top.memory_p_uRAM_2e_RAM.update(this->get_index("ram", "m"), m0, cxxrtl::value<32>{0xFFFFFFFFu});
+    ram(top).update(get_index("ram", "a0"), a0, cxxrtl::value<32>{0xFFFFFFFFu});
+    ram(top).update(get_index("ram", "a1"), a1, cxxrtl::value<32>{0xFFFFFFFFu});
+    ram(top).update(get_index("ram", "b0"), b0, cxxrtl::value<32>{0xFFFFFFFFu});
+    ram(top).update(get_index("ram", "b1"), b1, cxxrtl::value<32>{0xFFFFFFFFu});
+    ram(top).update(get_index("ram", "m"), m0, cxxrtl::value<32>{0xFFFFFFFFu});
 }
 
 void dom_and::conclude_implem(Manager& manager, cxxrtl_design::p_top& top) {
     manager.end_measure();
-    std::cout << "Will retreive res0 in index: " << this->get_index("ram", "res0") << std::endl;
-    std::cout << "Will retreive res1 in index: " << this->get_index("ram", "res1") << std::endl;
 
-    Node* res0 = &simplify(*top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res0")].getNode());
-    Node* res1 = &simplify(*top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res1")].getNode());
+    Node* res0 = &simplify(*ram(top)[get_index("ram", "res0")].getNode());
+    Node* res1 = &simplify(*ram(top)[get_index("ram", "res1")].getNode());
 
-    std::cout << "Conc res0: " << std::hex << top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res0")].get<uint32_t>() << std::dec << std::endl;
-    std::cout << "Conc res1: " << std::hex << top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res1")].get<uint32_t>() << std::dec << std::endl;
+    std::cout << "Conc res0: " << std::hex << ram(top)[get_index("ram", "res0")].get<uint32_t>() << std::dec << std::endl;
+    std::cout << "Conc res1: " << std::hex << ram(top)[get_index("ram", "res1")].get<uint32_t>() << std::dec << std::endl;
 
     std::cout << "Res 0: " << simplify(*res0) << std::endl;
     std::cout << "Res 1: " << simplify(*res1) << std::endl;
@@ -64,8 +59,8 @@ void dom_and::conclude_implem(Manager& manager, cxxrtl_design::p_top& top) {
     else
         std::cout << "Result DOES NOT match wanted expression" << std::endl;
 
-    if (&getExpValue(getBitDecomposition(*res0), symbol_to_conc_) == &constant(top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res0")].get<uint32_t>(), 32)
-        and &getExpValue(getBitDecomposition(*res1), symbol_to_conc_) == &constant(top.memory_p_uRAM_2e_RAM[this->get_index("ram", "res1")].get<uint32_t>(), 32))
+    if (&getExpValue(getBitDecomposition(*res0), symbol_to_conc_) == &constant(ram(top)[get_index("ram", "res0")].get<uint32_t>(), 32)
+        and &getExpValue(getBitDecomposition(*res1), symbol_to_conc_) == &constant(ram(top)[get_index("ram", "res1")].get<uint32_t>(), 32))
         std::cout << "Concretizing result expressions provides the correct concrete result !" << std::endl;
     else
         std::cout << "Concretizing result expressions DOES NOT provide the correct concrete result, something went wrong." << std::endl;

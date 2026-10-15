@@ -1,9 +1,11 @@
 #ifndef AES_HERBST_UNSECURE_SETUP_H
 #define AES_HERBST_UNSECURE_SETUP_H
+
 #include "ibex_program.h"
 
 class aes_herbst_unsecure : public IbexProgram<aes_herbst_unsecure> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);

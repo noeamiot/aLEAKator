@@ -12,19 +12,27 @@ class CM4Program : public ProgramInterface<Derived> {
             {"rom", 0x0u}
         };
 
+        static cxxrtl::memory<32>& rom(cxxrtl_design::p_top& top) {
+            return top.memory_p_uROM_2e_RAM;
+        }
+
+        static cxxrtl::memory<32>& ram(cxxrtl_design::p_top& top) {
+            return top.memory_p_uRAM_2e_RAM;
+        }
+
         // Matching LD script, text and data section are respectively at beginning of ROM and RAM
         void load_implem(Manager& manager, cxxrtl_design::p_top& top) {
             this->program_ = manager.load_program();
 
             size_t index = this->get_index("rom", "_text_start");
             for (const auto& word : this->program_.text_) {
-                top.memory_p_uROM_2e_RAM[index].set<uint32_t, true>(word);
+                rom(top)[index].set<uint32_t, true>(word);
                 index++;
             }
 
             index = this->get_index("ram", "_data_start");
             for (const auto& word : this->program_.data_) {
-                top.memory_p_uRAM_2e_RAM[index].set<uint32_t, true>(word);
+                ram(top)[index].set<uint32_t, true>(word);
                 index++;
             }
         }

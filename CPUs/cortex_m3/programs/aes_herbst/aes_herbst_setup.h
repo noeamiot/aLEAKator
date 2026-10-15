@@ -5,6 +5,7 @@
 
 class aes_herbst : public CM3Program<aes_herbst> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);

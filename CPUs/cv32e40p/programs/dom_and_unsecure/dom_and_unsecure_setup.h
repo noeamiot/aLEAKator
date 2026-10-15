@@ -1,9 +1,11 @@
 #ifndef DOM_AND_UNSECURE_SETUP_H
 #define DOM_AND_UNSECURE_SETUP_H
+
 #include "cv32e40p_program.h"
 
 class dom_and_unsecure : public Cv32e40pProgram<dom_and_unsecure> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
@@ -13,5 +15,8 @@ class dom_and_unsecure : public Cv32e40pProgram<dom_and_unsecure> {
         Node* a;
         Node* b;
         Node* m;
+
+        std::vector<Node*> sa;
+        std::vector<Node*> sb;
 };
 #endif

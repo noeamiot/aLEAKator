@@ -5,6 +5,7 @@
 
 class dom_and : public IbexProgram<dom_and> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);
@@ -14,5 +15,8 @@ class dom_and : public IbexProgram<dom_and> {
         Node* a;
         Node* b;
         Node* m;
+
+        std::vector<Node*> sa;
+        std::vector<Node*> sb;
 };
 #endif

@@ -1,2 +1,3 @@
 Source: https://github.com/IAIK/coco-ibex
-Before use, go to ../submodules/coco-ibex/syn/ and run `./syn_yosys.sh`.
+
+RAM is not accessed using `ram(top)` but with `ram[index]` then accessed as a register.

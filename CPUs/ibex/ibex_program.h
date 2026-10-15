@@ -11,6 +11,10 @@ class IbexProgram : public ProgramInterface<Derived> {
             {"ram", 0x100000u},
         };
 
+        static cxxrtl::memory<32>& ram(cxxrtl_design::p_top& top) {
+            return top.memory_p_u__ram_2e_u__ram_2e_mem;
+        }
+
         // Matching LD script, text and data section are concatenated at beginning of ram
         void load_implem(Manager& manager, cxxrtl_design::p_top& top) {
             // Ask manager to (re)program and perform (TODO:) a microarchitectural reset
@@ -18,13 +22,13 @@ class IbexProgram : public ProgramInterface<Derived> {
 
             size_t index = this->get_index("ram", "_text_start");
             for (const auto& word : this->program_.text_) {
-                top.memory_p_u__ram_2e_u__ram_2e_mem[index].set<uint32_t, true>(word);
+                ram(top)[index].set<uint32_t, true>(word);
                 index++;
             }
 
             index = this->get_index("ram", "_data_start");
             for (const auto& word : this->program_.data_) {
-                top.memory_p_u__ram_2e_u__ram_2e_mem[index].set<uint32_t, true>(word);
+                ram(top)[index].set<uint32_t, true>(word);
                 index++;
             }
         }

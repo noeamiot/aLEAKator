@@ -5,6 +5,7 @@
 
 class aes_herbst_unsecure : public AubracProgram<aes_herbst_unsecure> {
     public:
+        void initial_init_implem(Manager& manager);
         void init_implem(Manager& manager, cxxrtl_design::p_top& top);
         void conclude_implem(Manager& manager, cxxrtl_design::p_top& top);
         void hook_implem(Manager& manager, cxxrtl_design::p_top& top);

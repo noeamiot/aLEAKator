@@ -30,7 +30,7 @@ class BinaryLoader {
         BinaryLoader() = delete;
 
         // Reads text + data + symbols
-        static RawProgram load(const std::string &file);
+        static RawProgram load(const std::string& file);
 };
 
 #endif // PROGRAM_H

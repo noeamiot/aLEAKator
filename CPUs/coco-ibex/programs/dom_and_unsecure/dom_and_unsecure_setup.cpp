@@ -1,26 +1,23 @@
 #include "dom_and_unsecure_setup.h"
 #include "cxxrtl_coco-ibex.h"
 
-void dom_and_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    manager.begin_measure();
+void dom_and_unsecure::initial_init_implem(Manager& manager) {
     a = &symbol("a", 'S', 32);
     b = &symbol("b", 'S', 32);
     m = &symbol("m", 'M', 32);
 
-    std::cout << "Will insert a0 in index: " << this->get_index("ram", "as0") << std::endl;
-    std::cout << "Will insert a1 in index: " << this->get_index("ram", "as1") << std::endl;
-    std::cout << "Will insert b0 in index: " << this->get_index("ram", "bs0") << std::endl;
-    std::cout << "Will insert b1 in index: " << this->get_index("ram", "bs1") << std::endl;
-    std::cout << "Will insert m in index: " << this->get_index("ram", "m") << std::endl;
+    sa = manager.get_shares(*a, 2);
+    sb = manager.get_shares(*b, 2);
+}
 
-    std::vector<Node*> sa = getPseudoShares(*a, 2);
-    std::vector<Node*> sb = getPseudoShares(*b, 2);
+void dom_and_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
+    manager.begin_measure();
 
-    cxxrtl::value<32> a0 = (*ram[this->get_index("ram", "as0")]).curr;
-    cxxrtl::value<32> a1 = (*ram[this->get_index("ram", "as1")]).curr;
-    cxxrtl::value<32> b0 = (*ram[this->get_index("ram", "bs0")]).curr;
-    cxxrtl::value<32> b1 = (*ram[this->get_index("ram", "bs1")]).curr;
-    cxxrtl::value<32> m0 = (*ram[this->get_index("ram", "m")]).curr;
+    cxxrtl::value<32> a0 = (*ram[get_index("ram", "as0")]).curr;
+    cxxrtl::value<32> a1 = (*ram[get_index("ram", "as1")]).curr;
+    cxxrtl::value<32> b0 = (*ram[get_index("ram", "bs0")]).curr;
+    cxxrtl::value<32> b1 = (*ram[get_index("ram", "bs1")]).curr;
+    cxxrtl::value<32> m0 = (*ram[get_index("ram", "m")]).curr;
 
     a0.setNode(sa[0]);
     a1.setNode(sa[1]);
@@ -34,36 +31,36 @@ void dom_and_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) 
     symbol_to_conc_.insert({a, &constant(a0.get<uint32_t>() ^ a1.get<uint32_t>(), 32)});
     symbol_to_conc_.insert({b, &constant(b0.get<uint32_t>() ^ b1.get<uint32_t>(), 32)});
 
-    (*ram[this->get_index("ram", "as0")]).curr = a0;
-    (*ram[this->get_index("ram", "as1")]).curr = a1;
-    (*ram[this->get_index("ram", "bs0")]).curr = b0;
-    (*ram[this->get_index("ram", "bs1")]).curr = b1;
-    (*ram[this->get_index("ram", "m")]).curr = m0;
+    (*ram[get_index("ram", "as0")]).curr = a0;
+    (*ram[get_index("ram", "as1")]).curr = a1;
+    (*ram[get_index("ram", "bs0")]).curr = b0;
+    (*ram[get_index("ram", "bs1")]).curr = b1;
+    (*ram[get_index("ram", "m")]).curr = m0;
 }
 
 void dom_and_unsecure::conclude_implem(Manager& manager, cxxrtl_design::p_top& top) {
     manager.end_measure();
-    std::cout << "Will retreive res0 in index: " << this->get_index("ram", "res0") << std::endl;
-    std::cout << "Will retreive res1 in index: " << this->get_index("ram", "res1") << std::endl;
+    std::cout << "Will retreive res0 in index: " << get_index("ram", "res0") << std::endl;
+    std::cout << "Will retreive res1 in index: " << get_index("ram", "res1") << std::endl;
 
-    Node* res0 = &simplify(*(*ram[this->get_index("ram", "res0")]).curr.getNode());
-    Node* res1 = &simplify(*(*ram[this->get_index("ram", "res1")]).curr.getNode());
+    Node* res0 = &simplify(*(*ram[get_index("ram", "res0")]).curr.getNode());
+    Node* res1 = &simplify(*(*ram[get_index("ram", "res1")]).curr.getNode());
 
-    std::cout << "Conc res0: " << std::hex << (*ram[this->get_index("ram", "res0")]).curr.get<uint32_t>() << std::dec << std::endl;
-    std::cout << "Conc res1: " << std::hex << (*ram[this->get_index("ram", "res1")]).curr.get<uint32_t>() << std::dec << std::endl;
-    std::cout << "Conc res: " << std::hex << ((*ram[this->get_index("ram", "res1")]).curr.get<uint32_t>() ^ (*ram[this->get_index("ram", "res0")]).curr.get<uint32_t>()) << std::dec << std::endl;
+    std::cout << "Conc res0: " << std::hex << (*ram[get_index("ram", "res0")]).curr.get<uint32_t>() << std::dec << std::endl;
+    std::cout << "Conc res1: " << std::hex << (*ram[get_index("ram", "res1")]).curr.get<uint32_t>() << std::dec << std::endl;
+    std::cout << "Conc res: " << std::hex << ((*ram[get_index("ram", "res1")]).curr.get<uint32_t>() ^ (*ram[get_index("ram", "res0")]).curr.get<uint32_t>()) << std::dec << std::endl;
 
     std::cout << "Res 0: " << simplify(*res0) << std::endl;
     std::cout << "Res 1: " << simplify(*res1) << std::endl;
 
-    if (equivalence(simplify(*(ram[this->get_index("ram", "res0")]->getNode()) ^ *(ram[this->get_index("ram", "res1")]->getNode())), simplify(getBitDecomposition(*a & *b))))
-    //if (equivalence(simplify(*(ram[this->get_index("ram", "res0")]->getNode()) ^ *(ram[this->get_index("ram", "res1")]->getNode())), simplify(*a & *b)))
+    if (equivalence(simplify(*(ram[get_index("ram", "res0")]->getNode()) ^ *(ram[get_index("ram", "res1")]->getNode())), simplify(getBitDecomposition(*a & *b))))
+    //if (equivalence(simplify(*(ram[get_index("ram", "res0")]->getNode()) ^ *(ram[get_index("ram", "res1")]->getNode())), simplify(*a & *b)))
         std::cout << "Result matches wanted expression" << std::endl;
     else
         std::cout << "Result DOES NOT match wanted expression" << std::endl;
 
-    if (&getExpValue(getBitDecomposition(*res0), symbol_to_conc_) == &constant((*ram[this->get_index("ram", "res0")]).curr.get<uint32_t>(), 32)
-        and &getExpValue(getBitDecomposition(*res1), symbol_to_conc_) == &constant((*ram[this->get_index("ram", "res1")]).curr.get<uint32_t>(), 32))
+    if (&getExpValue(getBitDecomposition(*res0), symbol_to_conc_) == &constant((*ram[get_index("ram", "res0")]).curr.get<uint32_t>(), 32)
+        and &getExpValue(getBitDecomposition(*res1), symbol_to_conc_) == &constant((*ram[get_index("ram", "res1")]).curr.get<uint32_t>(), 32))
         std::cout << "Concretizing result expressions provides the correct concrete result !" << std::endl;
     else
         std::cout << "Concretizing result expressions DOES NOT provide the correct concrete result, something went wrong." << std::endl;

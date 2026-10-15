@@ -216,6 +216,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Call the initializer of the program
+    program->initial_init(manager);
     program->init(manager, top);
 
     bool reached_end = false;

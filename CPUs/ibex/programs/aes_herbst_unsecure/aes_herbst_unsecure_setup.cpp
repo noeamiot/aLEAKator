@@ -10,33 +10,28 @@ namespace aes_herbst_unsecure_ns {
     cxxrtl::value<32> read_result;
 
     cxxrtl::value<32>& SBoxPrime(cxxrtl::value<32>& e) {
-        // Key scheduele
         cxxrtl::value<8> temp;
         if (sboxp_access < 40)
-            temp = circuit->memory_p_u__ram_2e_u__ram_2e_mem[program->get_index("ram", "temp")+(sboxp_access%4)].trunc<8>().val();
+            temp = aes_herbst_unsecure::ram(*circuit)[program->get_index("ram", "temp")+(sboxp_access%4)].trunc<8>().val();
         else
-            temp = circuit->memory_p_u__ram_2e_u__ram_2e_mem[program->get_index("ram", "temp_sub")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("temp_sub")*8)}).trunc<8>().val();
+            temp = aes_herbst_unsecure::ram(*circuit)[program->get_index("ram", "temp_sub")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("temp_sub")*8)}).trunc<8>().val();
 
-        cxxrtl::value<8> m = circuit->memory_p_u__ram_2e_u__ram_2e_mem[program->get_index("ram", "m")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("m")*8)}).trunc<8>().val();
-        cxxrtl::value<8> mp = circuit->memory_p_u__ram_2e_u__ram_2e_mem[program->get_index("ram", "mp")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("mp")*8)}).trunc<8>().val();
+        cxxrtl::value<8> m = aes_herbst_unsecure::ram(*circuit)[program->get_index("ram", "m")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("m")*8)}).trunc<8>().val();
+        cxxrtl::value<8> mp = aes_herbst_unsecure::ram(*circuit)[program->get_index("ram", "mp")].shr(cxxrtl::value<32>{static_cast<uint32_t>(program->get_position("mp")*8)}).trunc<8>().val();
 
         cxxrtl::value<8> index = cxxrtl_yosys::xor_uu<8>(temp, m);
-        cxxrtl::value<8> sboxEq = circuit->memory_p_u__ram_2e_u__ram_2e_mem[program->get_index("ram", "sbox") + (index.data[0] / 4)].shr(cxxrtl::value<32>{static_cast<uint32_t>((index.data[0]%4)*8)}).trunc<8>().val();
+        cxxrtl::value<8> sboxEq = aes_herbst_unsecure::ram(*circuit)[program->get_index("ram", "sbox") + (index.data[0] / 4)].shr(cxxrtl::value<32>{static_cast<uint32_t>((index.data[0]%4)*8)}).trunc<8>().val();
         sboxEq.setNode(&simplify((*sbox_array)[*index.node]));
 
         cxxrtl::value<8> res = cxxrtl_yosys::xor_uu<8>(sboxEq, mp);
         read_result = res.zext<32>().blit<31, 24>(res).blit<23, 16>(res).blit<15, 8>(res).val();
 
-    //    raise(SIGTRAP);
         sboxp_access++;
         return read_result;
     }
 }
 
-void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    assert(program_.symbols_.contains("start_analysis") && "start_analysis symbol is mandatory for aes_herbst.");
-    assert(program_.symbols_.contains("end_analysis") && "end_analysis symbol is mandatory for aes_herbst.");
-
+void aes_herbst_unsecure::initial_init_implem(Manager& manager) {
     for (int i = 0; i < 16; ++i) {
         spt.push_back(&symbol(("aes_pt" + std::to_string(i)).c_str(), 'P', 8));
         skey.push_back(&symbol(("aes_key" + std::to_string(i)).c_str(), 'S', 8));
@@ -46,35 +41,39 @@ void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& to
     smp = &symbol("aes_mp", 'M', 8);
     for (int i = 0; i < 10; i++)
         srcon.push_back(&symbol(("rcon_" + std::to_string(i)).c_str(), 'P', 8));
+}
 
-    assert(this->get_position("pt") == 0 && this->get_size("pt") == 4*4);
-    assert(this->get_position("key") == 0 && this->get_size("key") == 4*4);
-    assert(this->get_position("sboxp") == 0 && this->get_size("sboxp") == 256);
+void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& top) {
+    assert_size_align("start_analysis", 0, 0);
+    assert_size_align("end_analysis", 0, 0);
+
+    assert_size_align("pt", 16, 0);
+    assert_size_align("key", 16, 0);
+    assert_size_align("sboxp", 1024, 0);
 
     // Prepare every value
-    cxxrtl::value<32> mt = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "mt")];
-    cxxrtl::value<32> m = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "m")];
-    cxxrtl::value<32> mp = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "mp")];
+    cxxrtl::value<32> mt = ram(top)[get_index("ram", "mt")];
+    cxxrtl::value<32> m = ram(top)[get_index("ram", "m")];
+    cxxrtl::value<32> mp = ram(top)[get_index("ram", "mp")];
 
-    cxxrtl::value<32> pt0 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "pt") + 0];
-    cxxrtl::value<32> pt1 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "pt") + 1];
-    cxxrtl::value<32> pt2 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "pt") + 2];
-    cxxrtl::value<32> pt3 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "pt") + 3];
+    cxxrtl::value<32> pt0 = ram(top)[get_index("ram", "pt") + 0];
+    cxxrtl::value<32> pt1 = ram(top)[get_index("ram", "pt") + 1];
+    cxxrtl::value<32> pt2 = ram(top)[get_index("ram", "pt") + 2];
+    cxxrtl::value<32> pt3 = ram(top)[get_index("ram", "pt") + 3];
 
-    cxxrtl::value<32> key0 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "key") + 0];
-    cxxrtl::value<32> key1 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "key") + 1];
-    cxxrtl::value<32> key2 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "key") + 2];
-    cxxrtl::value<32> key3 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "key") + 3];
+    cxxrtl::value<32> key0 = ram(top)[get_index("ram", "key") + 0];
+    cxxrtl::value<32> key1 = ram(top)[get_index("ram", "key") + 1];
+    cxxrtl::value<32> key2 = ram(top)[get_index("ram", "key") + 2];
+    cxxrtl::value<32> key3 = ram(top)[get_index("ram", "key") + 3];
 
-    cxxrtl::value<32> rcon0 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "rcon") + 0];
-    cxxrtl::value<32> rcon1 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "rcon") + 1];
-    cxxrtl::value<32> rcon2 = top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "rcon") + 2];
+    cxxrtl::value<32> rcon0 = ram(top)[get_index("ram", "rcon") + 0];
+    cxxrtl::value<32> rcon1 = ram(top)[get_index("ram", "rcon") + 1];
+    cxxrtl::value<32> rcon2 = ram(top)[get_index("ram", "rcon") + 2];
 
     // Init sboxp
-    uint32_t concMVal = (m.get<uint32_t>() & this->get_mask("m").get<uint32_t>()) >> (this->get_position("m") * 8); //Concretisation but at init
-    uint32_t concMPVal = (mp.get<uint32_t>() & this->get_mask("mp").get<uint32_t>()) >> (this->get_position("mp") * 8); //Concretisation but at init
+    uint32_t concMVal = (m.get<uint32_t>() & get_mask("m").get<uint32_t>()) >> (get_position("m") * 8); //Concretisation but at init
+    uint32_t concMPVal = (mp.get<uint32_t>() & get_mask("mp").get<uint32_t>()) >> (get_position("mp") * 8); //Concretisation but at init
     for (uint32_t i = 0; i < 256; i++) {
-
         int lineIdx = (i ^ concMVal)/4;
         int pos = ((i ^ concMVal)%4);
         cxxrtl::value<32> mask;
@@ -84,7 +83,7 @@ void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& to
         cxxrtl::value<32> preVal;
         preVal.set<uint32_t, true>((sbox[i] ^ concMPVal) << (pos * 8));
         preVal.setNode(&simplify(Concat(constant(0, 24), (constant(sbox[i + 0], 8) ^ *smp)) << constant(pos * 8, 8)));
-        top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "sboxp") + lineIdx, preVal, mask);
+        ram(top).update(get_index("ram", "sboxp") + lineIdx, preVal, mask);
     }
 
     pt0.setNode(&simplify(Concat(*spt[3], *spt[2], *spt[1], *spt[0])));
@@ -102,28 +101,28 @@ void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& to
     rcon2.setNode(&simplify(Concat(constant(0, 8), constant(0, 8), *srcon[9], *srcon[8])));
 
     mt.setNode(smt);
-    m.setNode(&simplify(Concat(constant(0, 24), *sm) << (this->get_position("m") * 8)));
-    mp.setNode(&simplify(Concat(constant(0, 24), *smp) << (this->get_position("mp") * 8)));
+    m.setNode(&simplify(Concat(constant(0, 24), *sm) << (get_position("m") * 8)));
+    mp.setNode(&simplify(Concat(constant(0, 24), *smp) << (get_position("mp") * 8)));
 
     // Write in memory
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "pt") + 0, pt0, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "pt") + 1, pt1, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "pt") + 2, pt2, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "pt") + 3, pt3, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "pt") + 0, pt0, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "pt") + 1, pt1, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "pt") + 2, pt2, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "pt") + 3, pt3, cxxrtl::value<32>(0xFFFFFFFFu));
 
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "key") + 0, key0, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "key") + 1, key1, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "key") + 2, key2, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "key") + 3, key3, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "key") + 0, key0, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "key") + 1, key1, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "key") + 2, key2, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "key") + 3, key3, cxxrtl::value<32>(0xFFFFFFFFu));
 
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "rcon") + 0, rcon0, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "rcon") + 1, rcon1, cxxrtl::value<32>(0xFFFFFFFFu));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "rcon") + 2, rcon2, cxxrtl::value<32>(0x0000FFFFu));
+    ram(top).update(get_index("ram", "rcon") + 0, rcon0, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "rcon") + 1, rcon1, cxxrtl::value<32>(0xFFFFFFFFu));
+    ram(top).update(get_index("ram", "rcon") + 2, rcon2, cxxrtl::value<32>(0x0000FFFFu));
 
     // We may have more than on update on the same memory space as we do not know where the symbols are
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "mt"), mt, this->get_mask("mt"));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "m"), m, this->get_mask("m"));
-    top.memory_p_u__ram_2e_u__ram_2e_mem.update(this->get_index("ram", "mp"), mp, this->get_mask("mp"));
+    ram(top).update(get_index("ram", "mt"), mt, get_mask("mt"));
+    ram(top).update(get_index("ram", "m"), m, get_mask("m"));
+    ram(top).update(get_index("ram", "mp"), mp, get_mask("mp"));
 
     for (int i = 0; i < 4; i++) {
         symbol_to_conc_.insert({spt[0+i], &constant((pt0.get<uint32_t>() >> i*8) & 0xFFu, 8)});
@@ -153,21 +152,21 @@ void aes_herbst_unsecure::init_implem(Manager& manager, cxxrtl_design::p_top& to
     registerArray("sbox", 8, 8, 0x0, 256, NULL, sbox, 1);
     aes_herbst_unsecure_ns::sbox_array = &getArrayByName("sbox");
 
-    size_t startingIndex = this->get_index("ram", "sboxp");
-    size_t endingIndex = startingIndex + (this->get_size("sboxp") / 4);
+    size_t startingIndex = get_index("ram", "sboxp");
+    size_t endingIndex = startingIndex + (get_size("sboxp") / 4);
     std::tuple<size_t, size_t, std::function<cxxrtl::value<32>&(cxxrtl::value<32>&)>> sbp{startingIndex, endingIndex, aes_herbst_unsecure_ns::SBoxPrime};
-    top.memory_p_u__ram_2e_u__ram_2e_mem.funcArrays.push_back(sbp);
+    ram(top).funcArrays.push_back(sbp);
 }
 
 void aes_herbst_unsecure::conclude_implem(Manager& manager, cxxrtl_design::p_top& top) {
-    size_t cipher_index = this->get_index("ram", "ciphered_text");
+    size_t cipher_index = get_index("ram", "ciphered_text");
     for (int i = 0; i < 4; ++i) {
-        std::cout << top.memory_p_u__ram_2e_u__ram_2e_mem[cipher_index + i] << std::endl;
+        std::cout << ram(top)[cipher_index + i] << std::endl;
     }
     std::cout << "Sbox accesses : " << std::dec << aes_herbst_unsecure_ns::sboxp_access << std::endl;
     bool isResultValid = true;
     for (int i = 0; i < 4; ++i)
-        if (&getExpValue(*top.memory_p_u__ram_2e_u__ram_2e_mem[cipher_index + i].node, symbol_to_conc_) != &constant(top.memory_p_u__ram_2e_u__ram_2e_mem[cipher_index + i].data[0], 32))
+        if (&getExpValue(*ram(top)[cipher_index + i].node, symbol_to_conc_) != &constant(ram(top)[cipher_index + i].data[0], 32))
             isResultValid = false;
 
     if (isResultValid)
@@ -177,30 +176,21 @@ void aes_herbst_unsecure::conclude_implem(Manager& manager, cxxrtl_design::p_top
 }
 
 void aes_herbst_unsecure::hook_implem(Manager& manager, cxxrtl_design::p_top& top) {
+    // Sanity check on AES state
     for (int i = 0; i < 16; i++) {
-        assert(!top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "x") + i].node->hasPlus);
-//        assert(simplify(Extract(31, 8, *top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "x") + i].node)).nature == CONST);
+        if (ram(top)[get_index("ram", "x") + i].node->hasPlus)
+            throw std::runtime_error("aes_herbst: State contains a plus expression.");
+        if (simplify(Extract(31, 8, *ram(top)[get_index("ram", "x") + i].node)).nature != CONST)
+            throw std::runtime_error("aes_herbst: State element has spurious symbols.");
     }
 
-//    for (int i = 0; i < 64; i++) {
-//        std::cout << *top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "sboxp")+i].node << std::endl;
-//    }
-
-//    if (pc(top) == symbolTable["mix_column"].first) {
-//        std::cout << "Found mix_column symbol, printing state:" << std::endl;
-//        for (int i = 0; i < 16; i++)
-//            std::cout << *top.memory_p_u__ram_2e_u__ram_2e_mem[this->get_index("ram", "x") + i].node << std::endl;
-//    }
-
     if (program_.symbols_["start_analysis"].addr_ == pc(top)) {
-        std::cout << "Found start_analysys symbol, adjusting skip_verif_cycles !" << std::endl;
-        //CFG.SKIP_VERIF_CYCLES = STEPS+3;
+        std::cout << "Found start_analysys symbol, begining measure !" << std::endl;
         manager.begin_measure();
     }
 
     if (program_.symbols_["end_analysis"].addr_ == pc(top)) {
-        std::cout << "Found end_analysys symbol, adjusting skip_verif_cycles !" << std::endl;
-        //CFG.SKIP_VERIF_CYCLES = 99999;
+        std::cout << "Found end_analysys symbol, ending measure !" << std::endl;
         manager.end_measure();
     }
 }
